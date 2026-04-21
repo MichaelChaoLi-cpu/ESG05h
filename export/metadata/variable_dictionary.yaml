@@ -1,0 +1,240 @@
+log_mc:
+  variableNameInDataset: log_mc
+  variableNameInArticle: Log Market Capitalisation
+  variableAttribute: continuous
+  variableUnit: log JPY
+  variableDescription: Natural logarithm of annual market capitalisation. Primary
+    outcome variable.
+  variableSource: market_cap
+  observationNumber: 32843
+dlog_mc:
+  variableNameInDataset: dlog_mc
+  variableNameInArticle: Annual Log MC Growth
+  variableAttribute: continuous
+  variableUnit: log JPY difference
+  variableDescription: Year-over-year change in log market cap. Secondary outcome.
+  variableSource: market_cap
+  observationNumber: 32390
+match_competitiveness_lag1:
+  variableNameInDataset: match_competitiveness_lag1
+  variableNameInArticle: Competitiveness — Relatedness (t-1)
+  variableAttribute: continuous
+  variableUnit: index [0,1]
+  variableDescription: M1 variable. Coverage volume for Competitiveness topic, lagged
+    1 year.
+  variableSource: nlp_scores
+  observationNumber: 32883
+tend_competitiveness_pos_mean_lag1:
+  variableNameInDataset: tend_competitiveness_pos_mean_lag1
+  variableNameInArticle: Competitiveness — Positive Mean Score (t-1)
+  variableAttribute: continuous
+  variableUnit: index (positive)
+  variableDescription: M3 variable. Mean positive-sentiment intensity among Competitiveness-related
+    fragments, lagged 1 year.
+  variableSource: nlp_scores
+  observationNumber: 32883
+tend_competitiveness_neg_mean_lag1:
+  variableNameInDataset: tend_competitiveness_neg_mean_lag1
+  variableNameInArticle: Competitiveness — Negative Mean Score (t-1)
+  variableAttribute: continuous
+  variableUnit: index (negative)
+  variableDescription: M3 variable. Mean negative-sentiment intensity among Competitiveness-related
+    fragments, lagged 1 year.
+  variableSource: nlp_scores
+  observationNumber: 32883
+match_stakeholder_cocreation_lag1:
+  variableNameInDataset: match_stakeholder_cocreation_lag1
+  variableNameInArticle: Stakeholder Co-creation — Relatedness (t-1)
+  variableAttribute: continuous
+  variableUnit: index [0,1]
+  variableDescription: M1 variable. Coverage volume for Stakeholder Co-creation topic,
+    lagged 1 year.
+  variableSource: nlp_scores
+  observationNumber: 32883
+tend_stakeholder_cocreation_pos_mean_lag1:
+  variableNameInDataset: tend_stakeholder_cocreation_pos_mean_lag1
+  variableNameInArticle: Stakeholder Co-creation — Positive Mean Score (t-1)
+  variableAttribute: continuous
+  variableUnit: index (positive)
+  variableDescription: M3 variable. Mean positive-sentiment intensity among Stakeholder
+    Co-creation-related fragments, lagged 1 year.
+  variableSource: nlp_scores
+  observationNumber: 32883
+tend_stakeholder_cocreation_neg_mean_lag1:
+  variableNameInDataset: tend_stakeholder_cocreation_neg_mean_lag1
+  variableNameInArticle: Stakeholder Co-creation — Negative Mean Score (t-1)
+  variableAttribute: continuous
+  variableUnit: index (negative)
+  variableDescription: M3 variable. Mean negative-sentiment intensity among Stakeholder
+    Co-creation-related fragments, lagged 1 year.
+  variableSource: nlp_scores
+  observationNumber: 32883
+match_business_portfolio_lag1:
+  variableNameInDataset: match_business_portfolio_lag1
+  variableNameInArticle: Business Portfolio — Relatedness (t-1)
+  variableAttribute: continuous
+  variableUnit: index [0,1]
+  variableDescription: M1 variable. Coverage volume for Business Portfolio topic,
+    lagged 1 year.
+  variableSource: nlp_scores
+  observationNumber: 32883
+tend_business_portfolio_pos_mean_lag1:
+  variableNameInDataset: tend_business_portfolio_pos_mean_lag1
+  variableNameInArticle: Business Portfolio — Positive Mean Score (t-1)
+  variableAttribute: continuous
+  variableUnit: index (positive)
+  variableDescription: M3 variable. Mean positive-sentiment intensity among Business
+    Portfolio-related fragments, lagged 1 year.
+  variableSource: nlp_scores
+  observationNumber: 32883
+tend_business_portfolio_neg_mean_lag1:
+  variableNameInDataset: tend_business_portfolio_neg_mean_lag1
+  variableNameInArticle: Business Portfolio — Negative Mean Score (t-1)
+  variableAttribute: continuous
+  variableUnit: index (negative)
+  variableDescription: M3 variable. Mean negative-sentiment intensity among Business
+    Portfolio-related fragments, lagged 1 year.
+  variableSource: nlp_scores
+  observationNumber: 32883
+match_intellectual_capital_lag1:
+  variableNameInDataset: match_intellectual_capital_lag1
+  variableNameInArticle: Intellectual Capital — Relatedness (t-1)
+  variableAttribute: continuous
+  variableUnit: index [0,1]
+  variableDescription: M1 variable. Coverage volume for Intellectual Capital topic,
+    lagged 1 year.
+  variableSource: nlp_scores
+  observationNumber: 32883
+tend_intellectual_capital_pos_mean_lag1:
+  variableNameInDataset: tend_intellectual_capital_pos_mean_lag1
+  variableNameInArticle: Intellectual Capital — Positive Mean Score (t-1)
+  variableAttribute: continuous
+  variableUnit: index (positive)
+  variableDescription: M3 variable. Mean positive-sentiment intensity among Intellectual
+    Capital-related fragments, lagged 1 year.
+  variableSource: nlp_scores
+  observationNumber: 32883
+tend_intellectual_capital_neg_mean_lag1:
+  variableNameInDataset: tend_intellectual_capital_neg_mean_lag1
+  variableNameInArticle: Intellectual Capital — Negative Mean Score (t-1)
+  variableAttribute: continuous
+  variableUnit: index (negative)
+  variableDescription: M3 variable. Mean negative-sentiment intensity among Intellectual
+    Capital-related fragments, lagged 1 year.
+  variableSource: nlp_scores
+  observationNumber: 32883
+match_digital_transformation_lag1:
+  variableNameInDataset: match_digital_transformation_lag1
+  variableNameInArticle: Digital Transformation — Relatedness (t-1)
+  variableAttribute: continuous
+  variableUnit: index [0,1]
+  variableDescription: M1 variable. Coverage volume for Digital Transformation topic,
+    lagged 1 year.
+  variableSource: nlp_scores
+  observationNumber: 32883
+tend_digital_transformation_pos_mean_lag1:
+  variableNameInDataset: tend_digital_transformation_pos_mean_lag1
+  variableNameInArticle: Digital Transformation — Positive Mean Score (t-1)
+  variableAttribute: continuous
+  variableUnit: index (positive)
+  variableDescription: M3 variable. Mean positive-sentiment intensity among Digital
+    Transformation-related fragments, lagged 1 year.
+  variableSource: nlp_scores
+  observationNumber: 32883
+tend_digital_transformation_neg_mean_lag1:
+  variableNameInDataset: tend_digital_transformation_neg_mean_lag1
+  variableNameInArticle: Digital Transformation — Negative Mean Score (t-1)
+  variableAttribute: continuous
+  variableUnit: index (negative)
+  variableDescription: M3 variable. Mean negative-sentiment intensity among Digital
+    Transformation-related fragments, lagged 1 year.
+  variableSource: nlp_scores
+  observationNumber: 32883
+match_financial_metrics_lag1:
+  variableNameInDataset: match_financial_metrics_lag1
+  variableNameInArticle: Financial Metrics — Relatedness (t-1)
+  variableAttribute: continuous
+  variableUnit: index [0,1]
+  variableDescription: M1 variable. Coverage volume for Financial Metrics topic, lagged
+    1 year.
+  variableSource: nlp_scores
+  observationNumber: 32883
+tend_financial_metrics_pos_mean_lag1:
+  variableNameInDataset: tend_financial_metrics_pos_mean_lag1
+  variableNameInArticle: Financial Metrics — Positive Mean Score (t-1)
+  variableAttribute: continuous
+  variableUnit: index (positive)
+  variableDescription: M3 variable. Mean positive-sentiment intensity among Financial
+    Metrics-related fragments, lagged 1 year.
+  variableSource: nlp_scores
+  observationNumber: 32883
+tend_financial_metrics_neg_mean_lag1:
+  variableNameInDataset: tend_financial_metrics_neg_mean_lag1
+  variableNameInArticle: Financial Metrics — Negative Mean Score (t-1)
+  variableAttribute: continuous
+  variableUnit: index (negative)
+  variableDescription: M3 variable. Mean negative-sentiment intensity among Financial
+    Metrics-related fragments, lagged 1 year.
+  variableSource: nlp_scores
+  observationNumber: 32883
+match_corporate_value_lag1:
+  variableNameInDataset: match_corporate_value_lag1
+  variableNameInArticle: Corporate Value — Relatedness (t-1)
+  variableAttribute: continuous
+  variableUnit: index [0,1]
+  variableDescription: M1 variable. Coverage volume for Corporate Value topic, lagged
+    1 year.
+  variableSource: nlp_scores
+  observationNumber: 32883
+tend_corporate_value_pos_mean_lag1:
+  variableNameInDataset: tend_corporate_value_pos_mean_lag1
+  variableNameInArticle: Corporate Value — Positive Mean Score (t-1)
+  variableAttribute: continuous
+  variableUnit: index (positive)
+  variableDescription: M3 variable. Mean positive-sentiment intensity among Corporate
+    Value-related fragments, lagged 1 year.
+  variableSource: nlp_scores
+  observationNumber: 32883
+tend_corporate_value_neg_mean_lag1:
+  variableNameInDataset: tend_corporate_value_neg_mean_lag1
+  variableNameInArticle: Corporate Value — Negative Mean Score (t-1)
+  variableAttribute: continuous
+  variableUnit: index (negative)
+  variableDescription: M3 variable. Mean negative-sentiment intensity among Corporate
+    Value-related fragments, lagged 1 year.
+  variableSource: nlp_scores
+  observationNumber: 32883
+roa_pct_lag1:
+  variableNameInDataset: roa_pct_lag1
+  variableNameInArticle: ROA (t-1)
+  variableAttribute: continuous
+  variableUnit: '%'
+  variableDescription: Return on assets, lagged 1 year. Profitability control.
+  variableSource: lseg
+  observationNumber: 30723
+ltdebt_assets_pct_lag1:
+  variableNameInDataset: ltdebt_assets_pct_lag1
+  variableNameInArticle: LT Debt/Assets (t-1)
+  variableAttribute: continuous
+  variableUnit: '%'
+  variableDescription: Long-term debt as % of assets, lagged 1 year. Leverage control.
+  variableSource: lseg
+  observationNumber: 30230
+rnd_share_pct_lag1:
+  variableNameInDataset: rnd_share_pct_lag1
+  variableNameInArticle: R&D/Revenue (t-1)
+  variableAttribute: continuous
+  variableUnit: '%'
+  variableDescription: R&D expenditure as % of revenue, lagged 1 year. Innovation
+    intensity.
+  variableSource: lseg
+  observationNumber: 11696
+ibes_rec_mean_lag1:
+  variableNameInDataset: ibes_rec_mean_lag1
+  variableNameInArticle: IBES Recommendation (t-1)
+  variableAttribute: continuous
+  variableUnit: 1-5
+  variableDescription: Analyst consensus recommendation, lagged 1 year. 1=Strong Buy,
+    5=Sell.
+  variableSource: lseg
+  observationNumber: 11055

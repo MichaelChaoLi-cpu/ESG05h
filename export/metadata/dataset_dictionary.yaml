@@ -1,0 +1,57 @@
+nlp_scores:
+  datasetSourceName: ESG NLP Scores (match, sentiment, tendency)
+  datasetDescription: Fragment-level NLP scores for 23 ESG themes derived from Japanese
+    securities reports (有価証券報告書). Aggregated to company-year level.
+  datasetAttribute: table
+  datasetProvider: Japan Financial Services Agency (金融庁) / EDINET — NLP pipeline applied
+    by research team
+  datasetGenerationInfo: Securities reports downloaded from EDINET. Fragment-level
+    processing via SAPT model. match_scores, tendency_scores, sentiment_scores CSV
+    files.
+  datasetPeriod: 2016 to 2025
+  datasetScale: Japan — all TSE-listed companies
+  datasetSpatialResolution: company
+  datasetTemporalResolution: annual
+  datasetPreprocessingInfo: Japanese theme names translated to English snake_case.
+    Sub-scores extracted for 7 Business topics. All ESG variables lagged 1 year (t-1)
+    and 2 years (t-2) for identification.
+market_cap:
+  datasetSourceName: Annual Market Capitalisation
+  datasetDescription: Annual market capitalisation in JPY for Japanese listed companies.
+  datasetAttribute: table
+  datasetProvider: LSEG (London Stock Exchange Group, formerly Refinitiv)
+  datasetGenerationInfo: Downloaded from LSEG Workspace. Wide format (companies ×
+    years), reshaped to long.
+  datasetPeriod: 2015 to 2025
+  datasetScale: Japan — TSE-listed companies
+  datasetSpatialResolution: company
+  datasetTemporalResolution: annual
+  datasetPreprocessingInfo: Reshaped wide-to-long. log(MC) and year-over-year log
+    growth computed.
+lseg:
+  datasetSourceName: LSEG Fundamentals and IBES Analyst Consensus
+  datasetDescription: Annual financial statement data (ROA, leverage, R&D, revenue)
+    and IBES analyst consensus forecasts (EPS, revenue, recommendation, price target).
+  datasetAttribute: table
+  datasetProvider: LSEG (London Stock Exchange Group)
+  datasetGenerationInfo: 'Downloaded from LSEG Workspace using RIC identifiers (.T
+    suffix for TSE). Fundamentals: fiscal-year end data. IBES: monthly FY1 consensus
+    aggregated to annual via December month-end snapshot.'
+  datasetPeriod: 2015 to 2025
+  datasetScale: Japan — TSE-listed companies
+  datasetSpatialResolution: company
+  datasetTemporalResolution: annual (fundamentals); monthly aggregated to annual (IBES)
+  datasetPreprocessingInfo: 'RIC to stock_code: strip .T suffix. Fiscal-year duplicates
+    (from year changes): keep row with most complete data. IBES: December month-end
+    snapshot per RIC-year. All variables lagged 1 year.'
+gics:
+  datasetSourceName: GICS Sector Classification
+  datasetDescription: GICS sector/industry classification for Japanese listed companies.
+  datasetAttribute: table
+  datasetProvider: MSCI / S&P (via LSEG Workspace)
+  datasetGenerationInfo: MSCI_category_Japan_listed_companies.xlsx, static cross-section.
+  datasetPeriod: 2025 (static)
+  datasetScale: Japan — TSE-listed companies
+  datasetSpatialResolution: company
+  datasetTemporalResolution: static
+  datasetPreprocessingInfo: 11 GICS sectors. Merged to panel on stock_code.

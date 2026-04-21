@@ -3,22 +3,22 @@
 $schema: "https://json-schema.org/draft/2020-12/schema"
 $title: "Jiazi Law: export_folder"
 
-version: 0.1.0
+version: 0.2.0
 law_type: export_folder
 
 purpose: |
-  Define the required structure of the `exports/` directory produced by an
+  Define the required structure of the `export/` directory produced by an
   analysis repository so that Jiazi can automatically ingest analysis artifacts
-  (figures, tables, code, notebooks, sop, metadata, and actionbrief) and generate manuscripts.
+  (figures, tables, code, sop, metadata, and actionbrief) and generate manuscripts.
 
 principles:
   - The export folder is the **only interface** between an analysis repository and Jiazi.
   - All scientific artifacts used in the manuscript must appear in this folder.
   - Files must be deterministic and reproducible.
-  - Paths must be relative to the `exports/` root.
+  - Paths must be relative to the `export/` root.
 
 required_structure:
-  exports:
+  export:
     figures:
       description: Final figures used in the manuscript.
       file_pattern: "fig*.png | fig*.jpg"
@@ -43,36 +43,20 @@ required_structure:
         - modelling.py
         - data_processing.py
         - utils/
-
+      source_sync:
+        - All .py files under src/ in the analysis repository must be copied into
+          export/code/ as part of the export process.
       rules:
         - run_analysis.py must reproduce all exported figures and tables.
         - code should not depend on notebook execution.
+        - All .py files from src/ must be present in export/code/ before handoff to Jiazi.
 
-    nbs:
-      description: |
-        Full analysis source scripts in Jupytext percent format (.py).
-        Each file corresponds to one analytical step and can be converted
-        to a Jupyter notebook via jupytext.
-      required_files:
-        - "01_data_cleaning.py"
-        - "02_data_inspection.py"
-        - "03_analysis.py"
-        - "04_country_analysis.py"
-        - "90_export.py"
-      optional_files:
-        - "variable_dict.py"
-        - "gfs_income.py"
-      naming_rule: "NN_description.py  (NN = two-digit step number)"
-      rules:
-        - Files must be runnable as plain Python scripts from the project root.
-        - Export scripts (90+) must regenerate the full exports/ directory when run.
-
-    AnaSOP.md:
+    "AnaSOP.md":
       description: |
         Human-authored analysis specification document (Standard Operating Procedure).
         Describes research objectives, identification strategy, variable definitions,
         and the analytical workflow that the code implements.
-        Placed directly at the exports/ root (not inside a subdirectory).
+        Placed directly at the export/ root (not inside a subdirectory).
       requirement: mandatory
       rules:
         - AnaSOP.md must be kept in sync with the actual analysis code.
@@ -91,20 +75,18 @@ required_structure:
         - variable_dictionary.yaml
         - dataset_dictionary.yaml
 
-    actionbrief.yaml:
+    "actionbrief.yaml":
       description: |
         Core interface file describing datasets, variables, figures,
         tables, and the analytical workflow.
       requirement: mandatory
 
 integration_rules:
-  - All figures referenced in `actionbrief.yaml` must exist in `exports/figures/`.
-  - All tables referenced in `actionbrief.yaml` must exist in `exports/tables/`.
-  - Variables described in `variable_dictionary.yaml` must appear in
-    `actionbrief.variableDictionary`.
-  - Dataset entries must appear in `dataset_dictionary.yaml`.
-  - All nbs/ scripts listed in `required_files` must be present in `exports/nbs/`.
-  - `exports/AnaSOP.md` must be present at the exports/ root.
+  - All figures referenced in actionbrief.yaml must exist in export/figures/.
+  - All tables referenced in actionbrief.yaml must exist in export/tables/.
+  - Variables described in variable_dictionary.yaml must appear in actionbrief.variableDictionary.
+  - Dataset entries must appear in dataset_dictionary.yaml.
+  - export/AnaSOP.md must be present at the export/ root.
 
 naming_conventions:
   figures_prefix: "fig"
@@ -117,29 +99,27 @@ validation:
     - verify_figures_match_dictionary
     - verify_tables_match_dictionary
     - verify_metadata_consistency
-    - verify_nbs_scripts_present
     - verify_sop_present
+    - verify_src_py_files_copied_to_code
 
 output_target:
   description: |
-    The entire exports folder can be copied directly into a Jiazi SHOW
+    The entire export folder can be copied directly into a Jiazi SHOW
     directory. Jiazi will then automatically load:
       - figures
       - tables
       - code
-      - nbs
       - AnaSOP.md
       - actionbrief
       - metadata
 
 example_mapping:
-  exports:
-    figures:  "SHOW_xxx/figures/"
-    tables:   "SHOW_xxx/tables/"
-    code:     "SHOW_xxx/code/"
-    nbs:         "SHOW_xxx/nbs/"
-    AnaSOP.md:   "SHOW_xxx/AnaSOP.md"
-    actionbrief: "SHOW_xxx/actionbrief.yaml"
+  export:
+    figures: "SHOW_xxx/figures/"
+    tables: "SHOW_xxx/tables/"
+    code: "SHOW_xxx/code/"
+    "AnaSOP.md": "SHOW_xxx/AnaSOP.md"
+    "actionbrief.yaml": "SHOW_xxx/actionbrief.yaml"
     metadata: "SHOW_xxx/metadata/"
 
 notes:

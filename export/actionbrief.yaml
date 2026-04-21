@@ -1,0 +1,565 @@
+doc_type: actionbrief
+version: 2.0.2
+datasetDictionary:
+  nlp_scores:
+    datasetSourceName: ESG NLP Scores (match, sentiment, tendency)
+    datasetDescription: Fragment-level NLP scores for 23 ESG themes derived from Japanese securities reports (有価証券報告書). Aggregated
+      to company-year level.
+    datasetAttribute: table
+    datasetProvider: Japan Financial Services Agency (金融庁) / EDINET — NLP pipeline applied by research team
+    datasetGenerationInfo: Securities reports downloaded from EDINET. Fragment-level processing via SAPT model. match_scores,
+      tendency_scores, sentiment_scores CSV files.
+    datasetPeriod: 2016 to 2025
+    datasetScale: Japan — all TSE-listed companies
+    datasetSpatialResolution: company
+    datasetTemporalResolution: annual
+    datasetPreprocessingInfo: Japanese theme names translated to English snake_case. Sub-scores extracted for 7 Business topics.
+      All ESG variables lagged 1 year (t-1) and 2 years (t-2) for identification.
+  market_cap:
+    datasetSourceName: Annual Market Capitalisation
+    datasetDescription: Annual market capitalisation in JPY for Japanese listed companies.
+    datasetAttribute: table
+    datasetProvider: LSEG (London Stock Exchange Group, formerly Refinitiv)
+    datasetGenerationInfo: Downloaded from LSEG Workspace. Wide format (companies × years), reshaped to long.
+    datasetPeriod: 2015 to 2025
+    datasetScale: Japan — TSE-listed companies
+    datasetSpatialResolution: company
+    datasetTemporalResolution: annual
+    datasetPreprocessingInfo: Reshaped wide-to-long. log(MC) and year-over-year log growth computed.
+  lseg:
+    datasetSourceName: LSEG Fundamentals and IBES Analyst Consensus
+    datasetDescription: Annual financial statement data (ROA, leverage, R&D, revenue) and IBES analyst consensus forecasts
+      (EPS, revenue, recommendation, price target).
+    datasetAttribute: table
+    datasetProvider: LSEG (London Stock Exchange Group)
+    datasetGenerationInfo: 'Downloaded from LSEG Workspace using RIC identifiers (.T suffix for TSE). Fundamentals: fiscal-year
+      end data. IBES: monthly FY1 consensus aggregated to annual via December month-end snapshot.'
+    datasetPeriod: 2015 to 2025
+    datasetScale: Japan — TSE-listed companies
+    datasetSpatialResolution: company
+    datasetTemporalResolution: annual (fundamentals); monthly aggregated to annual (IBES)
+    datasetPreprocessingInfo: 'RIC to stock_code: strip .T suffix. Fiscal-year duplicates (from year changes): keep row with
+      most complete data. IBES: December month-end snapshot per RIC-year. All variables lagged 1 year.'
+  gics:
+    datasetSourceName: GICS Sector Classification
+    datasetDescription: GICS sector/industry classification for Japanese listed companies.
+    datasetAttribute: table
+    datasetProvider: MSCI / S&P (via LSEG Workspace)
+    datasetGenerationInfo: MSCI_category_Japan_listed_companies.xlsx, static cross-section.
+    datasetPeriod: 2025 (static)
+    datasetScale: Japan — TSE-listed companies
+    datasetSpatialResolution: company
+    datasetTemporalResolution: static
+    datasetPreprocessingInfo: 11 GICS sectors. Merged to panel on stock_code.
+variableDictionary:
+  log_mc:
+    variableNameInDataset: log_mc
+    variableNameInArticle: Log Market Capitalisation
+    variableAttribute: continuous
+    variableUnit: log JPY
+    variableDescription: Natural logarithm of annual market capitalisation. Primary outcome variable.
+    variableSource: market_cap
+    observationNumber: 32843
+  dlog_mc:
+    variableNameInDataset: dlog_mc
+    variableNameInArticle: Annual Log MC Growth
+    variableAttribute: continuous
+    variableUnit: log JPY difference
+    variableDescription: Year-over-year change in log market cap. Secondary outcome.
+    variableSource: market_cap
+    observationNumber: 32390
+  match_competitiveness_lag1:
+    variableNameInDataset: match_competitiveness_lag1
+    variableNameInArticle: Competitiveness — Relatedness (t-1)
+    variableAttribute: continuous
+    variableUnit: index [0,1]
+    variableDescription: M1 variable. Coverage volume for Competitiveness topic, lagged 1 year.
+    variableSource: nlp_scores
+    observationNumber: 32883
+  tend_competitiveness_pos_mean_lag1:
+    variableNameInDataset: tend_competitiveness_pos_mean_lag1
+    variableNameInArticle: Competitiveness — Positive Mean Score (t-1)
+    variableAttribute: continuous
+    variableUnit: index (positive)
+    variableDescription: M3 variable. Mean positive-sentiment intensity among Competitiveness-related fragments, lagged 1
+      year.
+    variableSource: nlp_scores
+    observationNumber: 32883
+  tend_competitiveness_neg_mean_lag1:
+    variableNameInDataset: tend_competitiveness_neg_mean_lag1
+    variableNameInArticle: Competitiveness — Negative Mean Score (t-1)
+    variableAttribute: continuous
+    variableUnit: index (negative)
+    variableDescription: M3 variable. Mean negative-sentiment intensity among Competitiveness-related fragments, lagged 1
+      year.
+    variableSource: nlp_scores
+    observationNumber: 32883
+  match_stakeholder_cocreation_lag1:
+    variableNameInDataset: match_stakeholder_cocreation_lag1
+    variableNameInArticle: Stakeholder Co-creation — Relatedness (t-1)
+    variableAttribute: continuous
+    variableUnit: index [0,1]
+    variableDescription: M1 variable. Coverage volume for Stakeholder Co-creation topic, lagged 1 year.
+    variableSource: nlp_scores
+    observationNumber: 32883
+  tend_stakeholder_cocreation_pos_mean_lag1:
+    variableNameInDataset: tend_stakeholder_cocreation_pos_mean_lag1
+    variableNameInArticle: Stakeholder Co-creation — Positive Mean Score (t-1)
+    variableAttribute: continuous
+    variableUnit: index (positive)
+    variableDescription: M3 variable. Mean positive-sentiment intensity among Stakeholder Co-creation-related fragments, lagged
+      1 year.
+    variableSource: nlp_scores
+    observationNumber: 32883
+  tend_stakeholder_cocreation_neg_mean_lag1:
+    variableNameInDataset: tend_stakeholder_cocreation_neg_mean_lag1
+    variableNameInArticle: Stakeholder Co-creation — Negative Mean Score (t-1)
+    variableAttribute: continuous
+    variableUnit: index (negative)
+    variableDescription: M3 variable. Mean negative-sentiment intensity among Stakeholder Co-creation-related fragments, lagged
+      1 year.
+    variableSource: nlp_scores
+    observationNumber: 32883
+  match_business_portfolio_lag1:
+    variableNameInDataset: match_business_portfolio_lag1
+    variableNameInArticle: Business Portfolio — Relatedness (t-1)
+    variableAttribute: continuous
+    variableUnit: index [0,1]
+    variableDescription: M1 variable. Coverage volume for Business Portfolio topic, lagged 1 year.
+    variableSource: nlp_scores
+    observationNumber: 32883
+  tend_business_portfolio_pos_mean_lag1:
+    variableNameInDataset: tend_business_portfolio_pos_mean_lag1
+    variableNameInArticle: Business Portfolio — Positive Mean Score (t-1)
+    variableAttribute: continuous
+    variableUnit: index (positive)
+    variableDescription: M3 variable. Mean positive-sentiment intensity among Business Portfolio-related fragments, lagged
+      1 year.
+    variableSource: nlp_scores
+    observationNumber: 32883
+  tend_business_portfolio_neg_mean_lag1:
+    variableNameInDataset: tend_business_portfolio_neg_mean_lag1
+    variableNameInArticle: Business Portfolio — Negative Mean Score (t-1)
+    variableAttribute: continuous
+    variableUnit: index (negative)
+    variableDescription: M3 variable. Mean negative-sentiment intensity among Business Portfolio-related fragments, lagged
+      1 year.
+    variableSource: nlp_scores
+    observationNumber: 32883
+  match_intellectual_capital_lag1:
+    variableNameInDataset: match_intellectual_capital_lag1
+    variableNameInArticle: Intellectual Capital — Relatedness (t-1)
+    variableAttribute: continuous
+    variableUnit: index [0,1]
+    variableDescription: M1 variable. Coverage volume for Intellectual Capital topic, lagged 1 year.
+    variableSource: nlp_scores
+    observationNumber: 32883
+  tend_intellectual_capital_pos_mean_lag1:
+    variableNameInDataset: tend_intellectual_capital_pos_mean_lag1
+    variableNameInArticle: Intellectual Capital — Positive Mean Score (t-1)
+    variableAttribute: continuous
+    variableUnit: index (positive)
+    variableDescription: M3 variable. Mean positive-sentiment intensity among Intellectual Capital-related fragments, lagged
+      1 year.
+    variableSource: nlp_scores
+    observationNumber: 32883
+  tend_intellectual_capital_neg_mean_lag1:
+    variableNameInDataset: tend_intellectual_capital_neg_mean_lag1
+    variableNameInArticle: Intellectual Capital — Negative Mean Score (t-1)
+    variableAttribute: continuous
+    variableUnit: index (negative)
+    variableDescription: M3 variable. Mean negative-sentiment intensity among Intellectual Capital-related fragments, lagged
+      1 year.
+    variableSource: nlp_scores
+    observationNumber: 32883
+  match_digital_transformation_lag1:
+    variableNameInDataset: match_digital_transformation_lag1
+    variableNameInArticle: Digital Transformation — Relatedness (t-1)
+    variableAttribute: continuous
+    variableUnit: index [0,1]
+    variableDescription: M1 variable. Coverage volume for Digital Transformation topic, lagged 1 year.
+    variableSource: nlp_scores
+    observationNumber: 32883
+  tend_digital_transformation_pos_mean_lag1:
+    variableNameInDataset: tend_digital_transformation_pos_mean_lag1
+    variableNameInArticle: Digital Transformation — Positive Mean Score (t-1)
+    variableAttribute: continuous
+    variableUnit: index (positive)
+    variableDescription: M3 variable. Mean positive-sentiment intensity among Digital Transformation-related fragments, lagged
+      1 year.
+    variableSource: nlp_scores
+    observationNumber: 32883
+  tend_digital_transformation_neg_mean_lag1:
+    variableNameInDataset: tend_digital_transformation_neg_mean_lag1
+    variableNameInArticle: Digital Transformation — Negative Mean Score (t-1)
+    variableAttribute: continuous
+    variableUnit: index (negative)
+    variableDescription: M3 variable. Mean negative-sentiment intensity among Digital Transformation-related fragments, lagged
+      1 year.
+    variableSource: nlp_scores
+    observationNumber: 32883
+  match_financial_metrics_lag1:
+    variableNameInDataset: match_financial_metrics_lag1
+    variableNameInArticle: Financial Metrics — Relatedness (t-1)
+    variableAttribute: continuous
+    variableUnit: index [0,1]
+    variableDescription: M1 variable. Coverage volume for Financial Metrics topic, lagged 1 year.
+    variableSource: nlp_scores
+    observationNumber: 32883
+  tend_financial_metrics_pos_mean_lag1:
+    variableNameInDataset: tend_financial_metrics_pos_mean_lag1
+    variableNameInArticle: Financial Metrics — Positive Mean Score (t-1)
+    variableAttribute: continuous
+    variableUnit: index (positive)
+    variableDescription: M3 variable. Mean positive-sentiment intensity among Financial Metrics-related fragments, lagged
+      1 year.
+    variableSource: nlp_scores
+    observationNumber: 32883
+  tend_financial_metrics_neg_mean_lag1:
+    variableNameInDataset: tend_financial_metrics_neg_mean_lag1
+    variableNameInArticle: Financial Metrics — Negative Mean Score (t-1)
+    variableAttribute: continuous
+    variableUnit: index (negative)
+    variableDescription: M3 variable. Mean negative-sentiment intensity among Financial Metrics-related fragments, lagged
+      1 year.
+    variableSource: nlp_scores
+    observationNumber: 32883
+  match_corporate_value_lag1:
+    variableNameInDataset: match_corporate_value_lag1
+    variableNameInArticle: Corporate Value — Relatedness (t-1)
+    variableAttribute: continuous
+    variableUnit: index [0,1]
+    variableDescription: M1 variable. Coverage volume for Corporate Value topic, lagged 1 year.
+    variableSource: nlp_scores
+    observationNumber: 32883
+  tend_corporate_value_pos_mean_lag1:
+    variableNameInDataset: tend_corporate_value_pos_mean_lag1
+    variableNameInArticle: Corporate Value — Positive Mean Score (t-1)
+    variableAttribute: continuous
+    variableUnit: index (positive)
+    variableDescription: M3 variable. Mean positive-sentiment intensity among Corporate Value-related fragments, lagged 1
+      year.
+    variableSource: nlp_scores
+    observationNumber: 32883
+  tend_corporate_value_neg_mean_lag1:
+    variableNameInDataset: tend_corporate_value_neg_mean_lag1
+    variableNameInArticle: Corporate Value — Negative Mean Score (t-1)
+    variableAttribute: continuous
+    variableUnit: index (negative)
+    variableDescription: M3 variable. Mean negative-sentiment intensity among Corporate Value-related fragments, lagged 1
+      year.
+    variableSource: nlp_scores
+    observationNumber: 32883
+  roa_pct_lag1:
+    variableNameInDataset: roa_pct_lag1
+    variableNameInArticle: ROA (t-1)
+    variableAttribute: continuous
+    variableUnit: '%'
+    variableDescription: Return on assets, lagged 1 year. Profitability control.
+    variableSource: lseg
+    observationNumber: 30723
+  ltdebt_assets_pct_lag1:
+    variableNameInDataset: ltdebt_assets_pct_lag1
+    variableNameInArticle: LT Debt/Assets (t-1)
+    variableAttribute: continuous
+    variableUnit: '%'
+    variableDescription: Long-term debt as % of assets, lagged 1 year. Leverage control.
+    variableSource: lseg
+    observationNumber: 30230
+  rnd_share_pct_lag1:
+    variableNameInDataset: rnd_share_pct_lag1
+    variableNameInArticle: R&D/Revenue (t-1)
+    variableAttribute: continuous
+    variableUnit: '%'
+    variableDescription: R&D expenditure as % of revenue, lagged 1 year. Innovation intensity.
+    variableSource: lseg
+    observationNumber: 11696
+  ibes_rec_mean_lag1:
+    variableNameInDataset: ibes_rec_mean_lag1
+    variableNameInArticle: IBES Recommendation (t-1)
+    variableAttribute: continuous
+    variableUnit: 1-5
+    variableDescription: Analyst consensus recommendation, lagged 1 year. 1=Strong Buy, 5=Sell.
+    variableSource: lseg
+    observationNumber: 11055
+tableDictionary:
+  Table1:
+    tableId: Table 1
+    tablePath: tables/Table1_DescriptiveStats.xlsx
+    tableCaption: Descriptive Statistics for Key Variables.
+    tableAim: Characterise the distribution of outcome, disclosure, and control variables.
+    tableExplanation: Rows = variables (7 match scores, 7 pos_mean, 7 neg_mean, sentiment, logMC, ΔlogMC, ROA, leverage, R&D
+      share, IBES rec). Columns = N, mean, SD, min, p25, p50, p75, max.
+    tableSuitableSection: Data and Measurement
+  Table2:
+    tableId: Table 2
+    tablePath: tables/Table2_CrossTopic_Summary.xlsx
+    tableCaption: 'Cross-Topic Coefficient Summary: M1/M2/M3 for all 7 Business Topics.'
+    tableAim: Provide a compact overview of all 21 baseline regression coefficients.
+    tableExplanation: 'Rows = 5 coefficient types (M1 match; M2 match, sentiment; M3 pos_mean, neg_mean). Columns = 7 Business
+      topics. β and SE shown; stars: * p<0.10, ** p<0.05, *** p<0.01.'
+    tableSuitableSection: Results — Baseline Association
+  Table3:
+    tableId: Table 3
+    tablePath: tables/Table3_Mechanism_InfoChannel.xlsx
+    tableCaption: 'Mechanism Test 1: Information Channel — Baseline vs. Fundamentals-Controlled M1.'
+    tableAim: Show whether the disclosure coefficient survives controlling for ROA and leverage.
+    tableExplanation: 'Rows = 7 Business topics. Columns = β baseline, SE, β + controls, SE, attenuation %, N obs. Controls:
+      ROA (t-1) + LT Debt/Assets (t-1), same sample.'
+    tableSuitableSection: Results — Mechanism Tests
+  Table4:
+    tableId: Table 4
+    tablePath: tables/Table4_Mechanism_IBESMediation.xlsx
+    tableCaption: 'Mechanism Test 2: Analyst Attention Channel (Baron-Kenny IBES Mediation).'
+    tableAim: Quantify the analyst-channel proportion of the Business disclosure-MC association.
+    tableExplanation: Rows = 7 Business topics. Columns = β S1 (match→IBES rec), β S2a (match→logMC, IBES sample), β S2b (match+rec→logMC),
+      β S2b (rec→logMC), attenuation %, N (IBES).
+    tableSuitableSection: Results — Mechanism Tests
+  Table5:
+    tableId: Table 5
+    tablePath: tables/Table5_Mechanism_SignalDirection.xlsx
+    tableCaption: 'Mechanism Test 3: M3 Signal Direction Summary.'
+    tableAim: Classify the sign pattern of positive and negative Business disclosure effects per topic.
+    tableExplanation: Rows = 7 Business topics. Columns = β pos_mean, SE, β neg_mean, SE, pattern (bilateral signalling /
+      risk penalty / transparency dominates / ambiguous), N obs.
+    tableSuitableSection: Results — Mechanism Tests
+  Table6:
+    tableId: Table 6
+    tablePath: tables/Table6_Mechanism_ROAQuartile.xlsx
+    tableCaption: 'Mechanism Test 4: ROA Quartile Heterogeneity.'
+    tableAim: Test whether Business disclosure premium is larger for lower- or higher-quality firms.
+    tableExplanation: Rows = 7 topics × 4 ROA quartiles. Columns = β, SE, N obs, N companies. Q1 = lowest within-year ROA;
+      Q4 = highest.
+    tableSuitableSection: Results — Mechanism Tests
+  Table7:
+    tableId: Table 7
+    tablePath: tables/Table7_IdentificationRobustness.xlsx
+    tableCaption: 'Identification Robustness: M1 Match Coefficient across Six Checks.'
+    tableAim: Verify that results are robust to alternative outcomes, sample restrictions, and the t-2 lag identification
+      check.
+    tableExplanation: Rows = 7 topics × 6 checks (R0 baseline, R1 t-2 lag, R2 ΔlogMC, R3 excl. 2020, R4 balanced panel, R5
+      win. ΔlogMC). Columns = β, SE, outcome, N obs, N co., R².
+    tableSuitableSection: Results — Identification
+  Table8:
+    tableId: Table 8
+    tablePath: tables/Table8_SectorHet_M1.xlsx
+    tableCaption: 'Sector Heterogeneity: M1 Coverage Volume by GICS Sector.'
+    tableAim: Identify sector-level variation in the Business disclosure premium.
+    tableExplanation: Rows = 7 topics × 11 sectors. Columns = β match, SE, Within R², N obs, N companies.
+    tableSuitableSection: Results — Sector Heterogeneity
+  Table9:
+    tableId: Table 9
+    tablePath: tables/Table9_SectorHet_M3.xlsx
+    tableCaption: 'Sector Heterogeneity: M3 Positive and Negative Mean by GICS Sector.'
+    tableAim: Identify which sectors show bilateral signalling vs. risk-penalty patterns in Business disclosure.
+    tableExplanation: Rows = 7 topics × 11 sectors. Columns = β pos_mean, SE, β neg_mean, SE, Within R², N obs, N companies.
+    tableSuitableSection: Results — Sector Heterogeneity
+figureDictionary:
+  fig01:
+    figureId: Figure 1
+    figurePath: figures/fig01_business_disclosure_trends.png
+    figureCaption: Business ESG Disclosure Trends, 2016–2025. Cross-sectional mean relatedness score per Business topic and
+      overall ESG sentiment by year.
+    figureAim: Establish temporal trends in Business disclosure coverage to motivate the panel regression design.
+    figureExplanation: '8 panels (a–g: 7 Business topics, h: overall sentiment). Each panel shows the annual mean relatedness
+      (match) score. Upward trends reflect growing Business disclosure intensity over the study period.'
+    figureSuitableSection: Data and Measurement
+  fig02:
+    figureId: Figure 2
+    figurePath: figures/fig02_pos_neg_ratio_trends.png
+    figureCaption: Positive vs. Negative Disclosure Ratio Trends by Business Topic, 2016–2025.
+    figureAim: Show how the balance between positive and risk-acknowledging Business content evolves over time.
+    figureExplanation: '3×3 grid, one panel per Business topic. Green line: positive fragment ratio; red line: negative fragment
+      ratio. A widening gap suggests growing asymmetry in disclosure tone.'
+    figureSuitableSection: Data and Measurement
+  fig03:
+    figureId: Figure 3
+    figurePath: figures/fig03_market_cap_distributions.png
+    figureCaption: Market Capitalisation Distributions by Year.
+    figureAim: Characterise the outcome variable distribution and confirm no structural breaks in the panel.
+    figureExplanation: 'Two box plots: (a) log MC level, (b) annual log MC growth. Boxes show IQR; whiskers at 10th/90th percentile;
+      white dot = median. Dark teal = level; coral = growth.'
+    figureSuitableSection: Data and Measurement
+  fig04:
+    figureId: Figure 4
+    figurePath: figures/fig04_sector_radar.png
+    figureCaption: Business Disclosure Profile by GICS Sector. z-scored sector mean relative to global average.
+    figureAim: Descriptive overview of which sectors lead or lag the market on Business disclosure dimensions.
+    figureExplanation: '11 polar radar panels (one per GICS sector). Each spoke = one Business topic. Three overlaid areas:
+      blue = Relatedness, green = Positive Mean, red = Negative Mean. All metrics z-scored as (sector mean − global mean)
+      / global σ. Dashed circle = global average (z=0).'
+    figureSuitableSection: Data and Measurement
+  fig05:
+    figureId: Figure 5
+    figurePath: figures/fig05_baseline_coef_M1_M3.png
+    figureCaption: 'Baseline Association: M1/M2/M3 Coefficients per Business Topic.'
+    figureAim: Establish the baseline disclosure-market cap association across all three specifications for each Business
+      topic.
+    figureExplanation: '3×3 grid, one panel per topic (7 panels, 2 hidden). Horizontal CI plots: blue dots = M1/M2 coverage;
+      purple = sentiment; green = positive mean; red = negative mean. Dashed red vertical = zero. Error bars = 95% CI.'
+    figureSuitableSection: Results — Baseline Association
+  fig06:
+    figureId: Figure 6
+    figurePath: figures/fig06_mechanism_t1_info_channel.png
+    figureCaption: 'Test 1: Information Channel. Baseline M1 vs. M1 with Fundamentals Controls.'
+    figureAim: Test whether Business disclosure predicts market cap beyond fundamental quality (ROA + leverage).
+    figureExplanation: '7 panels. Each shows two dots: blue (baseline M1) and orange (M1 + ROA + LT leverage controls) on
+      the same sample. Attenuation % shown in panel corner. If orange dot remains significant, information channel is confirmed.'
+    figureSuitableSection: Results — Mechanism Tests
+  fig07:
+    figureId: Figure 7
+    figurePath: figures/fig07_mechanism_t2_ibes_mediation.png
+    figureCaption: 'Test 2: Analyst Attention Channel (IBES Mediation).'
+    figureAim: Test whether the disclosure-MC association is partly transmitted through analyst recommendation (analyst attention
+      channel).
+    figureExplanation: 7 panels. Blue dot = match coefficient in IBES sample (S2a); purple dot = match coefficient after adding
+      analyst recommendation control (S2b). Attenuation % = coefficient shrinkage. Larger attenuation signals stronger analyst
+      mediation.
+    figureSuitableSection: Results — Mechanism Tests
+  fig08:
+    figureId: Figure 8
+    figurePath: figures/fig08_mechanism_t3_signal_direction.png
+    figureCaption: 'Test 3: M3 Signal Direction — Positive vs. Negative Business Disclosure.'
+    figureAim: Determine whether positive and risk-acknowledging Business content carry the same or opposite valuation effects
+      (bilateral signalling vs. risk penalty).
+    figureExplanation: Grouped bar chart. Green bars = pos_mean coefficient; red bars = neg_mean coefficient. Both above zero
+      → bilateral signalling (transparency premium). Neg bar below zero → risk penalty. One group per Business topic.
+    figureSuitableSection: Results — Mechanism Tests
+  fig09:
+    figureId: Figure 9
+    figurePath: figures/fig09_mechanism_t4_roa_quartile.png
+    figureCaption: 'Test 4: ROA Quartile Heterogeneity.'
+    figureAim: Distinguish signalling theory (stronger for low-ROA firms) from complementarity (stronger for high-ROA firms).
+    figureExplanation: 7 panels. Four dots per panel, one per within-year ROA quartile (Q1 low → Q4 high). If the coefficient
+      decreases monotonically from Q1 to Q4, signalling dominates. If it increases, complementarity dominates.
+    figureSuitableSection: Results — Mechanism Tests
+  fig10:
+    figureId: Figure 10
+    figurePath: figures/fig10_identification_robustness.png
+    figureCaption: 'Identification Robustness: M1 Match Coefficient across Six Checks.'
+    figureAim: Verify that the baseline association is not driven by reverse causality, COVID shock, sample attrition, or
+      outliers.
+    figureExplanation: 7 panels. Topic-coloured dot = baseline (t-1). Red dot = t-2 lag (hardest reverse-causality test).
+      Grey dots = R2–R5. Error bars = 95% CI. Consistent sign and approximate magnitude across checks supports robustness.
+    figureSuitableSection: Results — Identification
+  fig11:
+    figureId: Figure 11
+    figurePath: figures/fig11_sector_heterogeneity_M1.png
+    figureCaption: 'Sector Heterogeneity: M1 Coverage Volume Coefficient by GICS Sector.'
+    figureAim: Identify which GICS sectors show the strongest Business disclosure premium.
+    figureExplanation: 7 panels. Sectors sorted by coefficient magnitude. Error bars = 95% CI. Sectors with small sample (Utilities
+      N=33, Energy N=26) should be interpreted cautiously.
+    figureSuitableSection: Results — Sector Heterogeneity
+analysisStructureBrief:
+  overview: 'Mechanism study examining how Business-related ESG disclosure affects market capitalisation among Japanese listed
+    companies (37,272 obs, 2016–2025). Indicator construction follows ESG05e/f/g: M1 (relatedness/coverage volume), M2 (relatedness
+    + overall document sentiment), M3 (positive mean + negative mean topic-specific intensity). Four mechanism tests: (1)
+    information channel beyond fundamental quality, (2) analyst attention mediation via IBES, (3) M3 signal direction asymmetry,
+    (4) ROA quartile heterogeneity. Identification robustness includes t-2 lag as the primary reverse-causality check. NLP
+    source: securities reports (有価証券報告書) from 金融庁 EDINET. Market cap and fundamentals from LSEG.'
+  levels:
+  - levelName: Data Preparation
+    levelAim: Merge NLP scores, market cap, GICS, fundamentals, and IBES into a single analysis panel.
+    inputs:
+    - match_scores.csv
+    - tendency_scores.csv
+    - sentiment_scores.csv
+    - Market_cap_annual.xlsx
+    - annual_financial_raw.xlsx
+    - IBES_monthly_raw.xlsx
+    - MSCI_category_Japan_listed_companies.xlsx
+    - Japan_interest_rate_annual.xlsx
+    modelOrMethod: Merge on (stock_code, year); lag ESG and control variables by 1 year and 2 years; compute log MC and ΔlogMC.
+    outputs:
+    - data/processed/panel.parquet (37,272 obs × 328 cols)
+    interpretation: Panel ready for TWFE estimation. t-2 lag columns computed in notebook for identification robustness.
+  - levelName: Part I — Baseline Association (M1/M2/M3)
+    levelAim: Establish that Business ESG disclosure associates with market cap and characterise the operative channel among
+      coverage volume, overall tone, and directional intensity.
+    inputs:
+    - panel.parquet
+    - ENV_TOPICS (7 Business topics)
+    modelOrMethod: 'Two-way FE panel OLS (Frisch-Waugh within-company demeaning + C(year) dummies). SE clustered by company.
+      21 models: 7 topics × 3 specs (M1, M2, M3). ESG var lagged t-1.'
+    outputs:
+    - Table 2 (cross-topic summary)
+    - Tables S1–S7 (per-topic)
+    - Figure 5 (coefficient plots)
+    interpretation: 'Significant M1 β: coverage volume associates with MC. M3 β_pos > 0, β_neg sign reveals signalling vs.
+      penalty mechanism.'
+  - levelName: 'Part II — Mechanism Test 1: Information Channel'
+    levelAim: Determine whether Business disclosure predicts MC beyond fundamental quality (ROA and leverage).
+    inputs:
+    - panel.parquet
+    - roa_pct_lag1
+    - ltdebt_assets_pct_lag1
+    modelOrMethod: TWFE M1 on identical sample with and without ROA + LT leverage controls. Attenuation % = (1 − |β_ctrl/β_base|)
+      × 100.
+    outputs:
+    - Table 3 (attenuation summary)
+    - Figure 6 (before/after forest plot)
+    interpretation: 'Attenuation < 30%: information channel dominates firm quality. Attenuation > 70%: association primarily
+      reflects firm quality.'
+  - levelName: 'Part II — Mechanism Test 2: Analyst Attention Channel'
+    levelAim: Test whether Business disclosure transmits to market cap through improved analyst consensus (mediation).
+    inputs:
+    - panel.parquet
+    - ibes_rec_mean
+    - ibes_rec_mean_lag1
+    modelOrMethod: 'Baron-Kenny three-stage TWFE mediation. Stage 1: match(t-1) → IBES rec(t). Stage 2a: match(t-1) → logMC,
+      IBES sample. Stage 2b: match(t-1) + IBES rec(t-1) → logMC.'
+    outputs:
+    - Table 4 (mediation summary)
+    - Figure 7 (S2a vs S2b forest plot)
+    interpretation: Coefficient attenuation from S2a to S2b quantifies the analyst-channel proportion. Significant Stage 1
+      + attenuation confirms analyst transmission.
+  - levelName: 'Part II — Mechanism Test 3: Signal Direction (M3 Asymmetry)'
+    levelAim: Classify whether positive and risk-acknowledging Business disclosure carry the same or opposite valuation effects.
+    inputs:
+    - panel.parquet
+    - tend_{topic}_pos_mean_lag1
+    - tend_{topic}_neg_mean_lag1
+    modelOrMethod: 'TWFE M3 model. Compare sign of β_pos_mean and β_neg_mean per topic. Classify: bilateral signalling (both
+      > 0), risk penalty (pos > 0, neg < 0), transparency dominates (neg > 0 > pos), ambiguous.'
+    outputs:
+    - Table 5 (pattern classification)
+    - Figure 8 (grouped bar chart)
+    interpretation: 'Bilateral signalling: market rewards both growth signals and risk transparency. Risk penalty: market
+      treats negative Business content as bad news.'
+  - levelName: 'Part II — Mechanism Test 4: ROA Quartile Heterogeneity'
+    levelAim: Distinguish signalling theory from complementarity by testing whether the disclosure premium varies monotonically
+      with ROA.
+    inputs:
+    - panel.parquet
+    - roa_pct (within-year quartile split)
+    modelOrMethod: TWFE M1 estimated separately per within-year ROA quartile per topic.
+    outputs:
+    - Table 6 (quartile results)
+    - Figure 9 (quartile forest plot)
+    interpretation: 'Q1 (low ROA) > Q4 (high ROA): signalling theory. Q4 > Q1: complementarity.'
+  - levelName: Part III — Identification Robustness
+    levelAim: Verify that the baseline association is not driven by reverse causality, COVID shock, sample selection, or outliers.
+    inputs:
+    - panel.parquet
+    - match_{topic}_lag1
+    - match_{topic}_lag2
+    modelOrMethod: 'Six checks: R0 baseline (t-1), R1 t-2 lag, R2 ΔlogMC outcome, R3 exclude 2020, R4 balanced panel, R5 winsorised
+      ΔlogMC.'
+    outputs:
+    - Table 7 (robustness summary)
+    - Figure 10 (robustness forest plot)
+    interpretation: Consistent sign and approximate magnitude across R0–R5 (especially R1 t-2 lag) strengthens identification.
+      R1 survival is the sharpest test against reverse causality.
+  - levelName: Part IV — Sector Heterogeneity
+    levelAim: Identify in which GICS sectors Business disclosure commands the largest valuation premium.
+    inputs:
+    - panel.parquet
+    - sector (11 GICS sectors)
+    modelOrMethod: TWFE M1 and M3 estimated separately within each sector for each of 7 Business topics (11 × 7 × 2 = 154
+      models).
+    outputs:
+    - Table 8 (M1 sector)
+    - Table 9 (M3 sector)
+    - Figure 11 (M1 sector forest plot)
+    interpretation: 'Sectors with high Business disclosure materiality (IT, Consumer Discretionary, Industrials) should show
+      larger β. Financials: financial_metrics topic likely prominent.'
