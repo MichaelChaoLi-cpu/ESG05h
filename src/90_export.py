@@ -1193,6 +1193,23 @@ table_dict = {
     },
 }
 
+# Supplement tables S1–S7 (per-topic coefficient tables)
+for _si, _topic in enumerate(ENV_TOPICS, 1):
+    _lbl  = ENV_TOPIC_LABELS[_topic]
+    _fname = f"S{_si}_Coef_{_lbl.replace(' ', '').replace('&', '')[:20]}.xlsx"
+    table_dict[f"TableS{_si}"] = {
+        "tableId":       f"Table S{_si}",
+        "tablePath":     f"tables/{_fname}",
+        "tableCaption":  f"Per-Topic Coefficient Table: {_lbl} (M1 / M2 / M3).",
+        "tableAim":      f"Report full TWFE regression output for all three specifications (M1, M2, M3) for the {_lbl} topic.",
+        "tableExplanation": (
+            f"Rows = specification × variable (M1: Relatedness; M2: Relatedness + Overall Sentiment; "
+            f"M3: Positive Mean + Negative Mean). Columns = β, SE, N obs, N companies, Within R². "
+            f"Topic: {_lbl}."
+        ),
+        "tableSuitableSection": "Online Supplement — Per-Topic Results",
+    }
+
 analysis_levels = [
     {
         "levelName": "Data Preparation",

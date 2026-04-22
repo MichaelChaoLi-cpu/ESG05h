@@ -354,6 +354,64 @@ tableDictionary:
     tableAim: Identify which sectors show bilateral signalling vs. risk-penalty patterns in Business disclosure.
     tableExplanation: Rows = 7 topics × 11 sectors. Columns = β pos_mean, SE, β neg_mean, SE, Within R², N obs, N companies.
     tableSuitableSection: Results — Sector Heterogeneity
+  TableS1:
+    tableId: Table S1
+    tablePath: tables/S1_Coef_Competitiveness.xlsx
+    tableCaption: 'Per-Topic Coefficient Table: Competitiveness (M1 / M2 / M3).'
+    tableAim: Report full TWFE regression output for all three specifications (M1, M2, M3) for the Competitiveness topic.
+    tableExplanation: 'Rows = specification × variable (M1: Relatedness; M2: Relatedness + Overall Sentiment; M3: Positive
+      Mean + Negative Mean). Columns = β, SE, N obs, N companies, Within R². Topic: Competitiveness.'
+    tableSuitableSection: Online Supplement — Per-Topic Results
+  TableS2:
+    tableId: Table S2
+    tablePath: tables/S2_Coef_StakeholderCo-creati.xlsx
+    tableCaption: 'Per-Topic Coefficient Table: Stakeholder Co-creation (M1 / M2 / M3).'
+    tableAim: Report full TWFE regression output for all three specifications (M1, M2, M3) for the Stakeholder Co-creation
+      topic.
+    tableExplanation: 'Rows = specification × variable (M1: Relatedness; M2: Relatedness + Overall Sentiment; M3: Positive
+      Mean + Negative Mean). Columns = β, SE, N obs, N companies, Within R². Topic: Stakeholder Co-creation.'
+    tableSuitableSection: Online Supplement — Per-Topic Results
+  TableS3:
+    tableId: Table S3
+    tablePath: tables/S3_Coef_BusinessPortfolio.xlsx
+    tableCaption: 'Per-Topic Coefficient Table: Business Portfolio (M1 / M2 / M3).'
+    tableAim: Report full TWFE regression output for all three specifications (M1, M2, M3) for the Business Portfolio topic.
+    tableExplanation: 'Rows = specification × variable (M1: Relatedness; M2: Relatedness + Overall Sentiment; M3: Positive
+      Mean + Negative Mean). Columns = β, SE, N obs, N companies, Within R². Topic: Business Portfolio.'
+    tableSuitableSection: Online Supplement — Per-Topic Results
+  TableS4:
+    tableId: Table S4
+    tablePath: tables/S4_Coef_IntellectualCapital.xlsx
+    tableCaption: 'Per-Topic Coefficient Table: Intellectual Capital (M1 / M2 / M3).'
+    tableAim: Report full TWFE regression output for all three specifications (M1, M2, M3) for the Intellectual Capital topic.
+    tableExplanation: 'Rows = specification × variable (M1: Relatedness; M2: Relatedness + Overall Sentiment; M3: Positive
+      Mean + Negative Mean). Columns = β, SE, N obs, N companies, Within R². Topic: Intellectual Capital.'
+    tableSuitableSection: Online Supplement — Per-Topic Results
+  TableS5:
+    tableId: Table S5
+    tablePath: tables/S5_Coef_DigitalTransformatio.xlsx
+    tableCaption: 'Per-Topic Coefficient Table: Digital Transformation (M1 / M2 / M3).'
+    tableAim: Report full TWFE regression output for all three specifications (M1, M2, M3) for the Digital Transformation
+      topic.
+    tableExplanation: 'Rows = specification × variable (M1: Relatedness; M2: Relatedness + Overall Sentiment; M3: Positive
+      Mean + Negative Mean). Columns = β, SE, N obs, N companies, Within R². Topic: Digital Transformation.'
+    tableSuitableSection: Online Supplement — Per-Topic Results
+  TableS6:
+    tableId: Table S6
+    tablePath: tables/S6_Coef_FinancialMetrics.xlsx
+    tableCaption: 'Per-Topic Coefficient Table: Financial Metrics (M1 / M2 / M3).'
+    tableAim: Report full TWFE regression output for all three specifications (M1, M2, M3) for the Financial Metrics topic.
+    tableExplanation: 'Rows = specification × variable (M1: Relatedness; M2: Relatedness + Overall Sentiment; M3: Positive
+      Mean + Negative Mean). Columns = β, SE, N obs, N companies, Within R². Topic: Financial Metrics.'
+    tableSuitableSection: Online Supplement — Per-Topic Results
+  TableS7:
+    tableId: Table S7
+    tablePath: tables/S7_Coef_CorporateValue.xlsx
+    tableCaption: 'Per-Topic Coefficient Table: Corporate Value (M1 / M2 / M3).'
+    tableAim: Report full TWFE regression output for all three specifications (M1, M2, M3) for the Corporate Value topic.
+    tableExplanation: 'Rows = specification × variable (M1: Relatedness; M2: Relatedness + Overall Sentiment; M3: Positive
+      Mean + Negative Mean). Columns = β, SE, N obs, N companies, Within R². Topic: Corporate Value.'
+    tableSuitableSection: Online Supplement — Per-Topic Results
 figureDictionary:
   fig01:
     figureId: Figure 1
