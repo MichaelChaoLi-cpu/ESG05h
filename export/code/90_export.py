@@ -528,7 +528,7 @@ for idx, sec in enumerate(_sec_list):
     ax.set_yticks(r_ticks)
     ax.set_yticklabels([f"{z:+d}σ" for z in z_shown], size=6, color="#555")
     ax.set_ylim(0, None)
-    ax.set_title(sec, size=9, fontweight="bold", pad=14)
+    ax.set_title(f"({LETTERS[idx]}) {sec}", size=9, fontweight="bold", pad=14)
     ax.spines["polar"].set_visible(False)
     ax.grid(color="grey", alpha=0.25, lw=0.5)
 hide_unused(axf, len(_sec_list))
@@ -561,7 +561,7 @@ for idx, topic in enumerate(ENV_TOPICS):
     ax.set_yticks(range(len(plot_rows)))
     ax.set_yticklabels([r["label"] for r in plot_rows], fontsize=7.5)
     ax.set_xlabel("Coefficient  [95% CI]", fontsize=8)
-    ax.set_title(ENV_TOPIC_LABELS[topic], fontsize=9, fontweight="bold")
+    ax.set_title(f"({LETTERS[idx]}) {ENV_TOPIC_LABELS[topic]}", fontsize=9, fontweight="bold")
 hide_unused(axf, len(ENV_TOPICS))
 fig.legend(handles=[mpatches.Patch(color=DIM_COLORS[k], label=v)
                     for k, v in [("coverage", "Coverage (M1/M2)"),
@@ -590,7 +590,7 @@ for idx, topic in enumerate(ENV_TOPICS):
     ax.axvline(0, color="#e74c3c", lw=0.9, ls="--")
     ax.set_yticks([0, 1]); ax.set_yticklabels(["Baseline", "+ Controls"], fontsize=8)
     ax.set_xlabel("Match coef  [95% CI]", fontsize=8)
-    ax.set_title(ENV_TOPIC_LABELS[topic], fontsize=9, fontweight="bold")
+    ax.set_title(f"({LETTERS[idx]}) {ENV_TOPIC_LABELS[topic]}", fontsize=9, fontweight="bold")
     att = df_mech1.iloc[idx]["Attenuation %"]
     ax.text(0.98, 0.05, f"Atten.: {att}", transform=ax.transAxes,
             ha="right", fontsize=7.5, color="#555")
@@ -616,7 +616,7 @@ for idx, topic in enumerate(ENV_TOPICS):
     ax.axvline(0, color="#e74c3c", lw=0.9, ls="--")
     ax.set_yticks([0, 1]); ax.set_yticklabels(["Baseline", "+ IBES Rec"], fontsize=8)
     ax.set_xlabel("Match coef  [95% CI]", fontsize=8)
-    ax.set_title(ENV_TOPIC_LABELS[topic], fontsize=9, fontweight="bold")
+    ax.set_title(f"({LETTERS[idx]}) {ENV_TOPIC_LABELS[topic]}", fontsize=9, fontweight="bold")
     att = row["Attenuation %"]
     ax.text(0.98, 0.05, f"Atten.: {att}", transform=ax.transAxes,
             ha="right", fontsize=7.5, color="#555")
@@ -670,7 +670,7 @@ for idx, topic in enumerate(ENV_TOPICS):
     ax.set_yticks(range(len(plot_rows)))
     ax.set_yticklabels([r[0] for r in plot_rows], fontsize=8)
     ax.set_xlabel("M1 Match coef  [95% CI]", fontsize=8)
-    ax.set_title(ENV_TOPIC_LABELS[topic], fontsize=9, fontweight="bold")
+    ax.set_title(f"({LETTERS[idx]}) {ENV_TOPIC_LABELS[topic]}", fontsize=9, fontweight="bold")
 hide_unused(axf, len(ENV_TOPICS))
 fig.legend(handles=[mpatches.Patch(color=Q_COLORS[q], label=q) for q in ROA_QUARTILES],
            loc="lower right", fontsize=8, bbox_to_anchor=(0.99, 0.02))
@@ -697,7 +697,7 @@ for idx, topic in enumerate(ENV_TOPICS):
     ax.set_yticks(range(len(df_r)))
     ax.set_yticklabels(df_r["Check"].values, fontsize=7.5)
     ax.set_xlabel("Match coef  [95% CI]", fontsize=8)
-    ax.set_title(ENV_TOPIC_LABELS[topic], fontsize=9, fontweight="bold")
+    ax.set_title(f"({LETTERS[idx]}) {ENV_TOPIC_LABELS[topic]}", fontsize=9, fontweight="bold")
 hide_unused(axf, len(ENV_TOPICS))
 fig.legend(handles=[
     mpatches.Patch(color=TOPIC_COLORS[ENV_TOPICS[0]], label="Baseline (t−1)"),
@@ -722,7 +722,7 @@ for idx, topic in enumerate(ENV_TOPICS):
     ax.axvline(0, color="#e74c3c", lw=0.9, ls="--")
     ax.set_yticks(range(len(df_s))); ax.set_yticklabels(df_s["Sector"].values, fontsize=8)
     ax.set_xlabel("M1 Relatedness  [95% CI]", fontsize=8)
-    ax.set_title(ENV_TOPIC_LABELS[topic], fontsize=9, fontweight="bold")
+    ax.set_title(f"({LETTERS[idx]}) {ENV_TOPIC_LABELS[topic]}", fontsize=9, fontweight="bold")
 hide_unused(axf, len(ENV_TOPICS))
 plt.tight_layout()
 fig.savefig(FIGS / "fig11_sector_heterogeneity_M1.png", dpi=FIG_DPI, bbox_inches="tight")
@@ -751,8 +751,27 @@ desc_cols = (
      "roa_pct", "ltdebt_assets_pct", "rnd_share_pct", "ibes_rec_mean"]
 )
 desc_cols = [c for c in desc_cols if c in panel.columns]
-desc = panel[desc_cols].describe().T.round(4)
-desc.index = [c.replace("_", " ") for c in desc.index]
+desc_data = panel[desc_cols].copy()
+desc_data.replace([np.inf, -np.inf], np.nan, inplace=True)  # drop inf (e.g. R&D share)
+
+_t1_labels = {}
+for t in ENV_TOPICS:
+    lbl = ENV_TOPIC_LABELS[t]
+    _t1_labels[f"match_{t}"]          = f"{lbl} — Relatedness (M1)"
+    _t1_labels[f"tend_{t}_pos_mean"]   = f"{lbl} — Positive Mean (M3)"
+    _t1_labels[f"tend_{t}_neg_mean"]   = f"{lbl} — Negative Mean (M3)"
+_t1_labels.update({
+    "sentiment_mean":     "Overall ESG Sentiment",
+    "log_mc":             "Log Market Cap",
+    "dlog_mc":            "ΔLog Market Cap (YoY)",
+    "roa_pct":            "ROA (%)",
+    "ltdebt_assets_pct":  "LT Debt / Assets (%)",
+    "rnd_share_pct":      "R&D / Revenue (%)",
+    "ibes_rec_mean":      "IBES Recommendation (Mean)",
+})
+
+desc = desc_data.describe().T.round(4)
+desc.index = [_t1_labels.get(c, c) for c in desc.index]
 save_xlsx(desc, TABLES / "Table1_DescriptiveStats.xlsx", "Descriptive Statistics")
 
 # Table 2: Cross-topic summary M1-M3
