@@ -2,7 +2,9 @@
 name = "mproj_template"
 version = "2.0.3"
 description = "My project description"
-dependencies = []
+dependencies = [
+    "dvc>=3.67.1",
+]
 
 authors = [
   { name = "Mike C. Li"}

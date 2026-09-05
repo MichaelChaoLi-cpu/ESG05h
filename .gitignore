@@ -54,3 +54,13 @@ slurm-*.out
 .env
 
 prompt.md
+# MiliFrame private state and environment
+.frame-control/
+docs/frame-version.md
+docs/stage-control.md
+# MiliFrame local agent files
+.codex/
+.claude/
+CLAUDE.md
+AGENTS.md
+/article
