@@ -85,7 +85,7 @@ winsorised growth outcomes.
 
 ## Main Findings
 
-Current exported results show:
+Current results show:
 
 - M1 coverage is positive and statistically significant for six of seven
   Business topics; Digital Transformation has the largest baseline coefficient.
@@ -111,42 +111,35 @@ associations, not as definitive causal effects.
 
 ## Reproduction
 
-Create an environment with Python 3.12 and install the project dependencies.
-The current scripts require at least `numpy`, `pandas`, `openpyxl`, `pyarrow`,
-`matplotlib`, `statsmodels`, and `pyyaml`.
+The project uses Python 3.12 and uv. Initialize the locked environment with:
 
 ```bash
-python3 -m venv .venv
-source .venv/bin/activate
-python -m pip install --upgrade pip
-python -m pip install -r requirements.txt pandas statsmodels pyyaml
+uv sync --locked
 ```
 
-Run the pipeline from the repository root:
+The current lockfile contains DVC and its dependencies. Before running the research
+pipeline, migrate the retained research dependency list with uv:
 
 ```bash
-# 1. Build the cleaned panel
-python src/01_data_cleaning.py
-
-# 2. Generate the analysis notebook skeleton
-python src/03_analysis.py
-
-# 3. Regenerate figures, tables, metadata, and Jiazi export artifacts
-python src/90_export.py
+uv add -r requirements.txt pandas statsmodels pyyaml
 ```
 
-Expected primary output:
+This is a separate dependency setup step; review and commit the resulting
+`pyproject.toml` and `uv.lock` changes. The directory migration preserves existing
+results and does not re-estimate the models.
 
-```text
-data/processed/panel.parquet
-export/
-  figures/
-  tables/
-  metadata/
-  code/
-  nbs/
-  AnaSOP.md
-  actionbrief.yaml
+Run from the repository root:
+
+```bash
+# Check canonical script paths without changing data
+uv run python src/run_analysis.py --dry-run
+
+# Rebuild the panel, figures, tables and content dictionary
+uv run python src/run_analysis.py
+
+# Optional: generate analysis notebook skeletons (overwrites their notebooks)
+uv run python src/analyses/02_data_inspection.py
+uv run python src/analyses/03_analysis.py
 ```
 
 ## Repository Structure
@@ -154,41 +147,57 @@ export/
 ```text
 ESG05h/
   src/
-    01_data_cleaning.py       # raw data merge and panel construction
-    02_data_inspection.py     # notebook generator for data inspection
-    03_analysis.py            # notebook generator for mechanism analysis
-    90_export.py              # full export pipeline
-    vardict.py                # topic and variable dictionaries
+    preprocessing/01_data_cleaning.py
+    analyses/02_data_inspection.py
+    analyses/03_analysis.py
+    analyses/90_export.py       # writes directly to data/results and docs
+    run_analysis.py             # canonical pipeline entry point
+    vardict.py                  # shared variable definitions
+    exp/
   data/
-    raw/                      # local raw data, Git-ignored
-    processed/                # local processed panel, Git-ignored
+    raw/
+    processed/
+    exp/
+    results/
+      figures/
+      tables/
   docs/
-    AnaSOP.md                 # analysis standard operating procedure
-    ZDP02k-v010.pdf           # manuscript draft
-    LAWS/                     # export/actionbrief schemas
-  export/
-    figures/                  # final figures
-    tables/                   # final regression/descriptive tables
-    metadata/                 # dataset and variable dictionaries
-    code/                     # exported reproducible scripts
-    actionbrief.yaml          # Jiazi ingestion metadata
+    AnaSOP.md
+    actionbrief.yaml            # figure/table paths relative to repository root
+    metadata/
+    framelog/
+    frame-version.md
+    stage-control.md
+    LAWS/                      # historical schemas; current standards live in skills
+  article/
+    origin/
+    show/
 ```
+
+MiliFrame 3.2.2 is registered with current stage `mili`. DVC tracks the six
+standard folders and the two Frame control documents separately. Its default
+remote `storage` is `/Volumes/MikesDataBackup/dvc_remote`.
+
+The old export bundle has been split into canonical code, documentation and
+result directories. Duplicate scripts and the duplicate AnaSOP were removed.
+AnaSOP still contains the legacy research contract; directory migration alone
+does not certify compliance with the new eight-section research standard.
 
 ## Key Artifacts
 
 - [docs/AnaSOP.md](docs/AnaSOP.md): research objective, theory, variable
   construction, estimands, identification strategy, and workflow.
-- [export/actionbrief.yaml](export/actionbrief.yaml): machine-readable summary
+- [docs/actionbrief.yaml](docs/actionbrief.yaml): machine-readable summary
   of datasets, variables, tables, figures, and analysis structure.
-- [export/tables/Table2_CrossTopic_Summary.xlsx](export/tables/Table2_CrossTopic_Summary.xlsx):
+- [data/results/tables/Table2_CrossTopic_Summary.xlsx](data/results/tables/Table2_CrossTopic_Summary.xlsx):
   baseline M1/M2/M3 coefficient matrix.
-- [export/tables/Table3_Mechanism_InfoChannel.xlsx](export/tables/Table3_Mechanism_InfoChannel.xlsx):
+- [data/results/tables/Table3_Mechanism_InfoChannel.xlsx](data/results/tables/Table3_Mechanism_InfoChannel.xlsx):
   fundamentals-control attenuation test.
-- [export/tables/Table4_Mechanism_IBESMediation.xlsx](export/tables/Table4_Mechanism_IBESMediation.xlsx):
+- [data/results/tables/Table4_Mechanism_IBESMediation.xlsx](data/results/tables/Table4_Mechanism_IBESMediation.xlsx):
   analyst recommendation mediation test.
-- [export/tables/Table5_Mechanism_SignalDirection.xlsx](export/tables/Table5_Mechanism_SignalDirection.xlsx):
+- [data/results/tables/Table5_Mechanism_SignalDirection.xlsx](data/results/tables/Table5_Mechanism_SignalDirection.xlsx):
   M3 positive/negative signal classification.
-- [export/tables/Table7_IdentificationRobustness.xlsx](export/tables/Table7_IdentificationRobustness.xlsx):
+- [data/results/tables/Table7_IdentificationRobustness.xlsx](data/results/tables/Table7_IdentificationRobustness.xlsx):
   t-2 lag and standard robustness checks.
 
 ## Notes

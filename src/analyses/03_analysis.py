@@ -1,6 +1,6 @@
 """
-src/03_analysis.py
-Generates src/03_analysis.ipynb.
+src/analyses/03_analysis.py
+Generates src/analyses/03_analysis.ipynb.
 
 Mechanism study: How does Business-related ESG disclosure affect market cap?
 Structure:
@@ -14,17 +14,17 @@ Structure:
   Part IV — Sector Heterogeneity
 
 Run:
-    python src/03_analysis.py
+    python src/analyses/03_analysis.py
 """
 
 import json, uuid, sys
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parent))
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from vardict import ENV_TOPICS, ENV_TOPIC_LABELS
 
-ROOT = Path(__file__).resolve().parents[1]
-OUT  = ROOT / "src" / "03_analysis.ipynb"
+ROOT = Path(__file__).resolve().parents[2]
+OUT  = ROOT / "src" / "analyses" / "03_analysis.ipynb"
 
 
 def code(src):
@@ -73,10 +73,12 @@ import matplotlib.patches as mpatches
 import warnings
 warnings.filterwarnings("ignore")
 
-sys.path.insert(0, str(Path(".")))
+ROOT = next(p for p in (Path.cwd(), *Path.cwd().parents)
+            if (p / "pyproject.toml").is_file() and (p / "src" / "vardict.py").is_file())
+sys.path.insert(0, str(ROOT / "src"))
 from vardict import ENV_TOPICS, ENV_TOPIC_LABELS, SUB_SCORE_SUFFIXES
 
-PROCESSED = Path("../data/processed")
+PROCESSED = ROOT / "data" / "processed"
 
 plt.rcParams.update({
     "figure.dpi": 120,

@@ -19,11 +19,10 @@ Defines how we manage code, data, and experiments for reproducible, collaborativ
 myproj/
 ├── src/                # Python scripts; experimental *.ipynb allowed but not tracked
 ├── data/               # Datasets and reports (DVC-tracked, Git-ignored)
-├── etc/                # Shell utilities and auxiliary scripts
-├── docs/               # Project documentation (including LAWS/ schemas)
-├── export/             # Final artifacts for Jiazi ingestion (figures, tables, code, metadata)
+├── docs/               # Research contract, content dictionary and metadata
+├── article/            # Manuscript originals and presentation materials
 ├── pyproject.toml      # Project metadata and dependencies
-├── requirements.txt    # Python dependencies
+├── uv.lock             # Locked environment (requirements.txt is a legacy input)
 ├── .env                # Local environment variables (not committed)
 └── .gitignore
 ```
@@ -37,10 +36,10 @@ myproj/
 | Code | Git |
 | Data & large outputs | DVC |
 | Parameters | inline in scripts or `src/config.py` |
-| Packages | `pip install / uninstall` (auto-updates `requirements.txt`) |
+| Packages | `uv add / remove` (updates `pyproject.toml` and `uv.lock`) |
 | Experiments | `git checkout -b exp/<id>-<topic>` + DVC |
-| Final artifacts (figures, tables, code, metadata) | `export/` |
-| Artifact & export schemas | `docs/LAWS/` |
+| Results, code, content metadata | `data/results/`, `src/`, `docs/` |
+| Current content standards | `build-content-dictionary/references/` in installed skills |
 
 ---
 
@@ -84,8 +83,8 @@ data: add CMIP6 temperature 2000-2050
 ## 5) DVC Practices
 
 ```bash
-dvc add data/raw/dataset.parquet
-git add data/raw/dataset.parquet.dvc .gitignore
+uv run dvc add data/raw/
+git add data/raw.dvc .gitignore
 git commit -m "data: track dataset"
 dvc push
 ```
@@ -148,8 +147,8 @@ To revisit: `git checkout exp/001-description && dvc pull`
 See `COMMANDS.md` for full setup instructions.
 
 ```bash
-pip install <package>       # requirements.txt auto-updated
-pip uninstall <package>     # same
+uv add <package>       # updates pyproject.toml and uv.lock
+uv remove <package>    # same
 ```
 
 ---
@@ -183,45 +182,23 @@ Update the version whenever a workflow or structural change is merged to `dev`.
 
 ---
 
-## 12) Export & Jiazi Integration
+## 12) Research Outputs and Manuscript Handoff
 
-The `export/` directory is the **sole interface** between this analysis repo and Jiazi (manuscript generation). All final artifacts must be placed here before handing off.
+Canonical figures and tables live in `data/results/figures/` and
+`data/results/tables/`. Canonical scripts live in `src/preprocessing/` and
+`src/analyses/`, with shared definitions in `src/vardict.py` and the pipeline
+entry point in `src/run_analysis.py`.
 
-### Required structure
+`docs/AnaSOP.md` is the research contract. `docs/actionbrief.yaml` is the content
+dictionary; all figure and table paths are relative to the repository root.
+Dataset and variable metadata live in `docs/metadata/`. Manuscript materials
+belong in `article/origin/` and `article/show/` when produced.
 
-```
-export/
-├── figures/            # Final figures: figXX_description.png | .jpg
-├── tables/             # Final tables:  TableX_description.xlsx
-├── code/               # Minimal reproducible code
-│   └── run_analysis.py # Must regenerate all exported figures and tables
-├── configs/            # (optional) experiment_config.yaml
-├── metadata/           # variable_dictionary.yaml, dataset_dictionary.yaml
-└── actionbrief.yaml    # Core interface: datasets, variables, figures, tables, workflow
-```
+Current content standards are bundled with the installed
+`build-content-dictionary` skill. `docs/LAWS/` is retained as historical material
+and is not the active validator. The legacy AnaSOP still needs a separate
+research-content review against the new eight-section standard.
 
-### Naming conventions
-
-| Artifact | Pattern | Example |
-|----------|---------|---------|
-| Figure | `figXX_description.ext` | `fig01_global_distribution.png` |
-| Table | `TableX_description.xlsx` | `Table1_DataSummary.xlsx` |
-
-### actionbrief.yaml
-
-Validated against `docs/LAWS/law_actionbrief.yaml`. Required fields:
-
-- `doc_type: actionbrief`
-- `version`
-- `datasetDictionary` — keyed dataset descriptors
-- `variableDictionary` — keyed variable descriptors
-- `tableDictionary` / `figureDictionary` — keyed artifact descriptors
-- `analysisStructureBrief.levels` — ordered analytical levels (inputs → method → outputs → interpretation)
-
-### Rules
-
-- `export/` contains **only final artifacts** — no intermediate outputs.
-- Every figure/table referenced in `actionbrief.yaml` must exist in `export/figures/` or `export/tables/`.
-- `run_analysis.py` must reproduce all exported artifacts without notebook execution.
-- Jiazi will never modify files inside `export/`.
-- Schema definitions for validation live in `docs/LAWS/` — do not edit them unless intentionally updating the law version.
+Do not mirror source scripts or AnaSOP into another output bundle. DVC tracks
+results as the existing `data/results/` unit; Git tracks source scripts,
+metadata, the content dictionary and DVC pointers.

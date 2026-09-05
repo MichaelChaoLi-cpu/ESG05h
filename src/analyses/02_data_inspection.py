@@ -1,16 +1,16 @@
 """
-nbs/02_data_inspection.py
-Generates notebooks/02_data_inspection.ipynb.
+src/analyses/02_data_inspection.py
+Generates src/analyses/02_data_inspection.ipynb.
 
 Run:
-    python nbs/02_data_inspection.py
+    python src/analyses/02_data_inspection.py
 """
 
 import json
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[1]
-OUT  = ROOT / "src" / "02_data_inspection.ipynb"
+ROOT = Path(__file__).resolve().parents[2]
+OUT  = ROOT / "src" / "analyses" / "02_data_inspection.ipynb"
 
 
 def code(src):
@@ -36,10 +36,12 @@ import matplotlib.ticker as mticker
 from matplotlib.colors import TwoSlopeNorm
 from matplotlib.patches import Patch
 
-sys.path.insert(0, str(Path(".")))
+ROOT = next(p for p in (Path.cwd(), *Path.cwd().parents)
+            if (p / "pyproject.toml").is_file() and (p / "src" / "vardict.py").is_file())
+sys.path.insert(0, str(ROOT / "src"))
 from vardict import COLUMN_LABELS, ESG_THEME_PILLAR
 
-PROCESSED = Path("../data/processed")
+PROCESSED = ROOT / "data" / "processed"
 
 plt.rcParams.update({
     "figure.dpi": 120,

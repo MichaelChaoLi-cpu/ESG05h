@@ -13,13 +13,13 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-# Make nbs/ importable when run from project root or directly
-sys.path.insert(0, str(Path(__file__).parent))
+# Make the shared src dictionary importable from any working directory
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from vardict import ESG_THEME_EN, PILLAR_THEMES, ENV_TOPICS, SUB_SCORE_SUFFIXES
 
 # ── Paths ─────────────────────────────────────────────────────────────────────
 
-ROOT = Path(__file__).resolve().parents[1]
+ROOT = Path(__file__).resolve().parents[2]
 RAW = ROOT / "data" / "raw"
 PROCESSED = ROOT / "data" / "processed"
 PROCESSED.mkdir(parents=True, exist_ok=True)

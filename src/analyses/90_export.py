@@ -1,15 +1,14 @@
 """
-src/90_export.py
-Generates the complete export/ folder for Jiazi ingestion.
+src/analyses/90_export.py
+Generates research figures, tables, and content metadata in the MiliFrame layout.
 
 Implements AnaSOP §8–9 for the Business-disclosure mechanism study:
-  11 figures + 13 tables + metadata + actionbrief.yaml + nbs/ + AnaSOP.md
+  11 figures + 16 tables + metadata + actionbrief.yaml
 
 Run (from project root):
-    python src/90_export.py
+    python src/analyses/90_export.py
 """
 
-import shutil
 import sys
 from pathlib import Path
 import warnings
@@ -24,19 +23,18 @@ import matplotlib.patches as mpatches
 import statsmodels.formula.api as smf
 import yaml
 
-sys.path.insert(0, str(Path(__file__).resolve().parent))
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from vardict import ENV_TOPICS, ENV_TOPIC_LABELS, SUB_SCORE_SUFFIXES
 
 # ── Paths ─────────────────────────────────────────────────────────────────────
-ROOT   = Path(__file__).resolve().parents[1]
+ROOT   = Path(__file__).resolve().parents[2]
 PROC   = ROOT / "data" / "processed"
-EXPORT = ROOT / "export"
-FIGS   = EXPORT / "figures"
-TABLES = EXPORT / "tables"
-CODE   = EXPORT / "code"
-META   = EXPORT / "metadata"
-NBS    = EXPORT / "nbs"
-for d in (FIGS, TABLES, CODE, META, NBS):
+RESULTS = ROOT / "data" / "results"
+DOCS   = ROOT / "docs"
+FIGS   = RESULTS / "figures"
+TABLES = RESULTS / "tables"
+META   = DOCS / "metadata"
+for d in (FIGS, TABLES, META):
     d.mkdir(parents=True, exist_ok=True)
 
 FIG_DPI = 300
@@ -1030,15 +1028,15 @@ print("Writing actionbrief.yaml...")
 figure_dict = {
     "fig01": {
         "figureId": "Figure 1",
-        "figurePath": "figures/fig01_business_disclosure_trends.png",
-        "figureCaption": "Business ESG Disclosure Trends, 2016–2025. Cross-sectional mean relatedness score per Business topic and overall ESG sentiment by year.",
+        "figurePath": "data/results/figures/fig01_business_disclosure_trends.png",
+        "figureCaption": "Business Disclosure and Overall ESG Sentiment Trends, 2016–2025.",
         "figureAim": "Establish temporal trends in Business disclosure coverage to motivate the panel regression design.",
         "figureExplanation": "8 panels (a–g: 7 Business topics, h: overall sentiment). Each panel shows the annual mean relatedness (match) score. Upward trends reflect growing Business disclosure intensity over the study period.",
         "figureSuitableSection": "Data and Measurement",
     },
     "fig02": {
         "figureId": "Figure 2",
-        "figurePath": "figures/fig02_pos_neg_ratio_trends.png",
+        "figurePath": "data/results/figures/fig02_pos_neg_ratio_trends.png",
         "figureCaption": "Positive vs. Negative Disclosure Ratio Trends by Business Topic, 2016–2025.",
         "figureAim": "Show how the balance between positive and risk-acknowledging Business content evolves over time.",
         "figureExplanation": "3×3 grid, one panel per Business topic. Green line: positive fragment ratio; red line: negative fragment ratio. A widening gap suggests growing asymmetry in disclosure tone.",
@@ -1046,7 +1044,7 @@ figure_dict = {
     },
     "fig03": {
         "figureId": "Figure 3",
-        "figurePath": "figures/fig03_market_cap_distributions.png",
+        "figurePath": "data/results/figures/fig03_market_cap_distributions.png",
         "figureCaption": "Market Capitalisation Distributions by Year.",
         "figureAim": "Characterise the outcome variable distribution and confirm no structural breaks in the panel.",
         "figureExplanation": "Two box plots: (a) log MC level, (b) annual log MC growth. Boxes show IQR; whiskers at 10th/90th percentile; white dot = median. Dark teal = level; coral = growth.",
@@ -1054,15 +1052,15 @@ figure_dict = {
     },
     "fig04": {
         "figureId": "Figure 4",
-        "figurePath": "figures/fig04_sector_radar.png",
-        "figureCaption": "Business Disclosure Profile by GICS Sector. z-scored sector mean relative to global average.",
+        "figurePath": "data/results/figures/fig04_sector_radar.png",
+        "figureCaption": "Standardized Business Disclosure Profiles by GICS Sector.",
         "figureAim": "Descriptive overview of which sectors lead or lag the market on Business disclosure dimensions.",
         "figureExplanation": "11 polar radar panels (one per GICS sector). Each spoke = one Business topic. Three overlaid areas: blue = Relatedness, green = Positive Mean, red = Negative Mean. All metrics z-scored as (sector mean − global mean) / global σ. Dashed circle = global average (z=0).",
         "figureSuitableSection": "Data and Measurement",
     },
     "fig05": {
         "figureId": "Figure 5",
-        "figurePath": "figures/fig05_baseline_coef_M1_M3.png",
+        "figurePath": "data/results/figures/fig05_baseline_coef_M1_M3.png",
         "figureCaption": "Baseline Association: M1/M2/M3 Coefficients per Business Topic.",
         "figureAim": "Establish the baseline disclosure-market cap association across all three specifications for each Business topic.",
         "figureExplanation": "3×3 grid, one panel per topic (7 panels, 2 hidden). Horizontal CI plots: blue dots = M1/M2 coverage; purple = sentiment; green = positive mean; red = negative mean. Dashed red vertical = zero. Error bars = 95% CI.",
@@ -1070,7 +1068,7 @@ figure_dict = {
     },
     "fig06": {
         "figureId": "Figure 6",
-        "figurePath": "figures/fig06_mechanism_t1_info_channel.png",
+        "figurePath": "data/results/figures/fig06_mechanism_t1_info_channel.png",
         "figureCaption": "Test 1: Information Channel. Baseline M1 vs. M1 with Fundamentals Controls.",
         "figureAim": "Test whether Business disclosure predicts market cap beyond fundamental quality (ROA + leverage).",
         "figureExplanation": "7 panels. Each shows two dots: blue (baseline M1) and orange (M1 + ROA + LT leverage controls) on the same sample. Attenuation % shown in panel corner. If orange dot remains significant, information channel is confirmed.",
@@ -1078,7 +1076,7 @@ figure_dict = {
     },
     "fig07": {
         "figureId": "Figure 7",
-        "figurePath": "figures/fig07_mechanism_t2_ibes_mediation.png",
+        "figurePath": "data/results/figures/fig07_mechanism_t2_ibes_mediation.png",
         "figureCaption": "Test 2: Analyst Attention Channel (IBES Mediation).",
         "figureAim": "Test whether the disclosure-MC association is partly transmitted through analyst recommendation (analyst attention channel).",
         "figureExplanation": "7 panels. Blue dot = match coefficient in IBES sample (S2a); purple dot = match coefficient after adding analyst recommendation control (S2b). Attenuation % = coefficient shrinkage. Larger attenuation signals stronger analyst mediation.",
@@ -1086,7 +1084,7 @@ figure_dict = {
     },
     "fig08": {
         "figureId": "Figure 8",
-        "figurePath": "figures/fig08_mechanism_t3_signal_direction.png",
+        "figurePath": "data/results/figures/fig08_mechanism_t3_signal_direction.png",
         "figureCaption": "Test 3: M3 Signal Direction — Positive vs. Negative Business Disclosure.",
         "figureAim": "Determine whether positive and risk-acknowledging Business content carry the same or opposite valuation effects (bilateral signalling vs. risk penalty).",
         "figureExplanation": "Grouped bar chart. Green bars = pos_mean coefficient; red bars = neg_mean coefficient. Both above zero → bilateral signalling (transparency premium). Neg bar below zero → risk penalty. One group per Business topic.",
@@ -1094,7 +1092,7 @@ figure_dict = {
     },
     "fig09": {
         "figureId": "Figure 9",
-        "figurePath": "figures/fig09_mechanism_t4_roa_quartile.png",
+        "figurePath": "data/results/figures/fig09_mechanism_t4_roa_quartile.png",
         "figureCaption": "Test 4: ROA Quartile Heterogeneity.",
         "figureAim": "Distinguish signalling theory (stronger for low-ROA firms) from complementarity (stronger for high-ROA firms).",
         "figureExplanation": "7 panels. Four dots per panel, one per within-year ROA quartile (Q1 low → Q4 high). If the coefficient decreases monotonically from Q1 to Q4, signalling dominates. If it increases, complementarity dominates.",
@@ -1102,7 +1100,7 @@ figure_dict = {
     },
     "fig10": {
         "figureId": "Figure 10",
-        "figurePath": "figures/fig10_identification_robustness.png",
+        "figurePath": "data/results/figures/fig10_identification_robustness.png",
         "figureCaption": "Identification Robustness: M1 Match Coefficient across Six Checks.",
         "figureAim": "Verify that the baseline association is not driven by reverse causality, COVID shock, sample attrition, or outliers.",
         "figureExplanation": "7 panels. Topic-coloured dot = baseline (t-1). Red dot = t-2 lag (hardest reverse-causality test). Grey dots = R2–R5. Error bars = 95% CI. Consistent sign and approximate magnitude across checks supports robustness.",
@@ -1110,7 +1108,7 @@ figure_dict = {
     },
     "fig11": {
         "figureId": "Figure 11",
-        "figurePath": "figures/fig11_sector_heterogeneity_M1.png",
+        "figurePath": "data/results/figures/fig11_sector_heterogeneity_M1.png",
         "figureCaption": "Sector Heterogeneity: M1 Coverage Volume Coefficient by GICS Sector.",
         "figureAim": "Identify which GICS sectors show the strongest Business disclosure premium.",
         "figureExplanation": "7 panels. Sectors sorted by coefficient magnitude. Error bars = 95% CI. Sectors with small sample (Utilities N=33, Energy N=26) should be interpreted cautiously.",
@@ -1121,7 +1119,7 @@ figure_dict = {
 table_dict = {
     "Table1": {
         "tableId": "Table 1",
-        "tablePath": "tables/Table1_DescriptiveStats.xlsx",
+        "tablePath": "data/results/tables/Table1_DescriptiveStats.xlsx",
         "tableCaption": "Descriptive Statistics for Key Variables.",
         "tableAim": "Characterise the distribution of outcome, disclosure, and control variables.",
         "tableExplanation": "Rows = variables (7 match scores, 7 pos_mean, 7 neg_mean, sentiment, logMC, ΔlogMC, ROA, leverage, R&D share, IBES rec). Columns = N, mean, SD, min, p25, p50, p75, max.",
@@ -1129,7 +1127,7 @@ table_dict = {
     },
     "Table2": {
         "tableId": "Table 2",
-        "tablePath": "tables/Table2_CrossTopic_Summary.xlsx",
+        "tablePath": "data/results/tables/Table2_CrossTopic_Summary.xlsx",
         "tableCaption": "Cross-Topic Coefficient Summary: M1/M2/M3 for all 7 Business Topics.",
         "tableAim": "Provide a compact overview of all 21 baseline regression coefficients.",
         "tableExplanation": "Rows = 5 coefficient types (M1 match; M2 match, sentiment; M3 pos_mean, neg_mean). Columns = 7 Business topics. β and SE shown; stars: * p<0.10, ** p<0.05, *** p<0.01.",
@@ -1137,7 +1135,7 @@ table_dict = {
     },
     "Table3": {
         "tableId": "Table 3",
-        "tablePath": "tables/Table3_Mechanism_InfoChannel.xlsx",
+        "tablePath": "data/results/tables/Table3_Mechanism_InfoChannel.xlsx",
         "tableCaption": "Mechanism Test 1: Information Channel — Baseline vs. Fundamentals-Controlled M1.",
         "tableAim": "Show whether the disclosure coefficient survives controlling for ROA and leverage.",
         "tableExplanation": "Rows = 7 Business topics. Columns = β baseline, SE, β + controls, SE, attenuation %, N obs. Controls: ROA (t-1) + LT Debt/Assets (t-1), same sample.",
@@ -1145,7 +1143,7 @@ table_dict = {
     },
     "Table4": {
         "tableId": "Table 4",
-        "tablePath": "tables/Table4_Mechanism_IBESMediation.xlsx",
+        "tablePath": "data/results/tables/Table4_Mechanism_IBESMediation.xlsx",
         "tableCaption": "Mechanism Test 2: Analyst Attention Channel (Baron-Kenny IBES Mediation).",
         "tableAim": "Quantify the analyst-channel proportion of the Business disclosure-MC association.",
         "tableExplanation": "Rows = 7 Business topics. Columns = β S1 (match→IBES rec), β S2a (match→logMC, IBES sample), β S2b (match+rec→logMC), β S2b (rec→logMC), attenuation %, N (IBES).",
@@ -1153,7 +1151,7 @@ table_dict = {
     },
     "Table5": {
         "tableId": "Table 5",
-        "tablePath": "tables/Table5_Mechanism_SignalDirection.xlsx",
+        "tablePath": "data/results/tables/Table5_Mechanism_SignalDirection.xlsx",
         "tableCaption": "Mechanism Test 3: M3 Signal Direction Summary.",
         "tableAim": "Classify the sign pattern of positive and negative Business disclosure effects per topic.",
         "tableExplanation": "Rows = 7 Business topics. Columns = β pos_mean, SE, β neg_mean, SE, pattern (bilateral signalling / risk penalty / transparency dominates / ambiguous), N obs.",
@@ -1161,7 +1159,7 @@ table_dict = {
     },
     "Table6": {
         "tableId": "Table 6",
-        "tablePath": "tables/Table6_Mechanism_ROAQuartile.xlsx",
+        "tablePath": "data/results/tables/Table6_Mechanism_ROAQuartile.xlsx",
         "tableCaption": "Mechanism Test 4: ROA Quartile Heterogeneity.",
         "tableAim": "Test whether Business disclosure premium is larger for lower- or higher-quality firms.",
         "tableExplanation": "Rows = 7 topics × 4 ROA quartiles. Columns = β, SE, N obs, N companies. Q1 = lowest within-year ROA; Q4 = highest.",
@@ -1169,7 +1167,7 @@ table_dict = {
     },
     "Table7": {
         "tableId": "Table 7",
-        "tablePath": "tables/Table7_IdentificationRobustness.xlsx",
+        "tablePath": "data/results/tables/Table7_IdentificationRobustness.xlsx",
         "tableCaption": "Identification Robustness: M1 Match Coefficient across Six Checks.",
         "tableAim": "Verify that results are robust to alternative outcomes, sample restrictions, and the t-2 lag identification check.",
         "tableExplanation": "Rows = 7 topics × 6 checks (R0 baseline, R1 t-2 lag, R2 ΔlogMC, R3 excl. 2020, R4 balanced panel, R5 win. ΔlogMC). Columns = β, SE, outcome, N obs, N co., R².",
@@ -1177,7 +1175,7 @@ table_dict = {
     },
     "Table8": {
         "tableId": "Table 8",
-        "tablePath": "tables/Table8_SectorHet_M1.xlsx",
+        "tablePath": "data/results/tables/Table8_SectorHet_M1.xlsx",
         "tableCaption": "Sector Heterogeneity: M1 Coverage Volume by GICS Sector.",
         "tableAim": "Identify sector-level variation in the Business disclosure premium.",
         "tableExplanation": "Rows = 7 topics × 11 sectors. Columns = β match, SE, Within R², N obs, N companies.",
@@ -1185,7 +1183,7 @@ table_dict = {
     },
     "Table9": {
         "tableId": "Table 9",
-        "tablePath": "tables/Table9_SectorHet_M3.xlsx",
+        "tablePath": "data/results/tables/Table9_SectorHet_M3.xlsx",
         "tableCaption": "Sector Heterogeneity: M3 Positive and Negative Mean by GICS Sector.",
         "tableAim": "Identify which sectors show bilateral signalling vs. risk-penalty patterns in Business disclosure.",
         "tableExplanation": "Rows = 7 topics × 11 sectors. Columns = β pos_mean, SE, β neg_mean, SE, Within R², N obs, N companies.",
@@ -1199,7 +1197,7 @@ for _si, _topic in enumerate(ENV_TOPICS, 1):
     _fname = f"S{_si}_Coef_{_lbl.replace(' ', '').replace('&', '')[:20]}.xlsx"
     table_dict[f"TableS{_si}"] = {
         "tableId":       f"Table S{_si}",
-        "tablePath":     f"tables/{_fname}",
+        "tablePath":     f"data/results/tables/{_fname}",
         "tableCaption":  f"Per-Topic Coefficient Table: {_lbl} (M1 / M2 / M3).",
         "tableAim":      f"Report full TWFE regression output for all three specifications (M1, M2, M3) for the {_lbl} topic.",
         "tableExplanation": (
@@ -1303,74 +1301,17 @@ actionbrief = {
     },
 }
 
-with open(EXPORT / "actionbrief.yaml", "w", encoding="utf-8") as f:
+with open(DOCS / "actionbrief.yaml", "w", encoding="utf-8") as f:
     yaml.dump(actionbrief, f, allow_unicode=True, sort_keys=False, default_flow_style=False,
               width=120)
 print("  actionbrief.yaml done.")
 
 
-# ══════════════════════════════════════════════════════════════════════════════
-# CODE / NBS / AnaSOP
-# ══════════════════════════════════════════════════════════════════════════════
-print("Exporting code and nbs...")
-
-# run_analysis.py — minimal reproducible script
-run_analysis = """\
-\"\"\"
-run_analysis.py
-Minimal reproducible script — regenerates all export/ artifacts.
-
-Run from project root:
-    python export/code/run_analysis.py
-\"\"\"
-import subprocess, sys
-from pathlib import Path
-ROOT = Path(__file__).resolve().parents[2]
-for script in ["src/01_data_cleaning.py", "src/90_export.py"]:
-    print(f"Running {script}...")
-    subprocess.run([sys.executable, str(ROOT / script)], check=True, cwd=str(ROOT))
-print("Done. All export/ artifacts regenerated.")
-"""
-(CODE / "run_analysis.py").write_text(run_analysis, encoding="utf-8")
-
-# Copy all src/*.py to export/code/  (law_export_folder: source_sync)
-for src in sorted((ROOT / "src").glob("*.py")):
-    shutil.copy2(src, CODE / src.name)
-
-# Also mirror to nbs/ for backward compatibility
-for src in sorted((ROOT / "src").glob("*.py")):
-    shutil.copy2(src, NBS / src.name)
-
-# Copy AnaSOP.md to export root
-sop_src = ROOT / "docs" / "AnaSOP.md"
-if sop_src.exists():
-    shutil.copy2(sop_src, EXPORT / "AnaSOP.md")
-    print("  AnaSOP.md copied.")
-
-print("  Code/nbs done.")
-
-
-# ══════════════════════════════════════════════════════════════════════════════
-# FINAL VALIDATION SUMMARY
-# ══════════════════════════════════════════════════════════════════════════════
-figs_found   = sorted(FIGS.glob("fig*.png"))
-tables_found = sorted(TABLES.glob("Table*.xlsx")) + sorted(TABLES.glob("S*.xlsx"))
-print(f"\n{'='*55}")
-print(f"Export complete → {EXPORT}")
-code_found = sorted(CODE.glob("*.py"))
-print(f"  Figures  : {len(figs_found):2d}  {[f.name for f in figs_found]}")
-print(f"  Tables   : {len(tables_found):2d}  {[t.name for t in tables_found]}")
-print(f"  Code     : {[f.name for f in code_found]}")
-print(f"  Metadata : {[f.name for f in sorted(META.iterdir())]}")
-print(f"  AnaSOP   : {(EXPORT / 'AnaSOP.md').exists()}")
-print(f"  actionbrief: {(EXPORT / 'actionbrief.yaml').exists()}")
-
-# law validation: verify_src_py_files_copied_to_code
-src_py = {f.name for f in (ROOT / "src").glob("*.py")}
-code_py = {f.name for f in CODE.glob("*.py")} - {"run_analysis.py"}
-missing = src_py - code_py
-if missing:
-    print(f"  [WARN] verify_src_py_files_copied_to_code: missing {missing}")
-else:
-    print(f"  [OK]   verify_src_py_files_copied_to_code")
-print(f"{'='*55}")
+# Final output summary
+figs_found = sorted(FIGS.glob("fig*.png"))
+tables_found = sorted(TABLES.glob("*.xlsx"))
+print(f"Results complete → {RESULTS}")
+print(f"  Figures: {len(figs_found)}")
+print(f"  Tables: {len(tables_found)}")
+print(f"  Metadata: {META}")
+print(f"  Content dictionary: {DOCS / 'actionbrief.yaml'}")

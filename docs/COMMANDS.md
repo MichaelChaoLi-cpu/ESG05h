@@ -1,188 +1,88 @@
 # Commands Handbook
 
-Reference for setting up and maintaining a MiliFrame project.
-Run all commands from the **project root** unless stated otherwise.
+Run commands from the repository root. Python 3.12 and uv are the current
+environment tools; the legacy Conda hook has been removed.
 
----
-
-## Chapter 1 — Initialization (do once per project)
-
-### 1.1 Clone the template and rename
+## Environment
 
 ```bash
-export myproj=YOUR_PROJECT_NAME
-
-git clone https://github.com/MichaelChaoLi-cpu/MiliFrame-Template.git
-mv MiliFrame-Template $myproj
-cd $myproj
-
-git remote rename origin upstream
+uv sync --locked
+uv run python --version
+uv pip list
 ```
 
-### 1.2 Link to your own repository
+The current lockfile contains DVC, not the full research environment. To migrate
+the retained research dependencies before running analyses:
 
 ```bash
-export REPO_ADD_in_GITHUB=https://<token>@github.com/<user>/<repo>.git
-
-git remote add origin $REPO_ADD_in_GITHUB
-git push -u origin main
+uv add -r requirements.txt pandas statsmodels pyyaml
 ```
 
-### 1.3 Set up environment variables (.env)
+Review dependency changes in `pyproject.toml` and `uv.lock`. For later package
+changes, use `uv add <package>` or `uv remove <package>`.
 
-The `.env` file is loaded by every script and is **never committed to git**.
+## Research pipeline
 
 ```bash
-echo -n > .env
-echo "myproj=$myproj"          >> .env
-echo "PROJECT_ROOT=$(pwd)"     >> .env
-echo "PYTHON_VERSION=3.12"     >> .env   # change if you need a different version
-
-# Load into current shell to verify
-set -a && source .env && set +a
-cat .env
+uv run python src/run_analysis.py --dry-run
+uv run python src/run_analysis.py
 ```
 
-Expected `.env` content:
-```
-myproj=YOUR_PROJECT_NAME
-PROJECT_ROOT=/absolute/path/to/your/project
-PYTHON_VERSION=3.12
-```
-
-### 1.4 Create the conda environment (Python 3.12)
+The pipeline rebuilds `data/processed/panel.parquet`, writes figures and tables
+under `data/results/`, and updates `docs/metadata/` and `docs/actionbrief.yaml`.
+To run individual stages:
 
 ```bash
-# If variables are not set in your current shell, reload them first:
-set -a && source .env && set +a
-
-conda create -n $myproj python=${PYTHON_VERSION:-3.12} -y
-conda activate $myproj
+uv run python src/preprocessing/01_data_cleaning.py
+uv run python src/analyses/90_export.py
 ```
 
-> If the project ships a pre-built `environment.yml`, use
-> `conda env create -f environment.yml` instead.
-
-### 1.5 Install Python dependencies
+Optional notebook generators overwrite their corresponding notebook skeletons:
 
 ```bash
-pip install -r requirements.txt
-pip install pre-commit dvc
-pre-commit install
+uv run python src/analyses/02_data_inspection.py
+uv run python src/analyses/03_analysis.py
 ```
 
-### 1.6 Install the pip auto-freeze hook (once per conda env)
+## DVC
 
-This makes every `pip install / uninstall / upgrade` in your terminal
-automatically update `requirements.txt`.
+DVC is initialized. Default remote `storage` points to
+`/Volumes/MikesDataBackup/dvc_remote`; do not initialize it again.
 
 ```bash
-chmod +x ./etc/setup_conda_hooks.sh
-./etc/setup_conda_hooks.sh
-conda activate $myproj          # re-activate to apply the hook
-type pip                        # should print: pip is a shell function
+uv run dvc status
+uv run dvc remote list
 ```
 
-### 1.7 Initialize DVC and configure remote storage
+Update only changed standard units, for example after regenerating results:
 
 ```bash
-dvc init
+uv run dvc add data/results/
 ```
 
-HPC:
-```bash
-dvc remote add -d hpc /home/<group>/share/dvc_remote
-```
+Keep `data/raw/`, `data/processed/`, `data/exp/`, `data/results/`, `article/`,
+`docs/framelog/`, `docs/frame-version.md`, and `docs/stage-control.md`
+as eight separate units. Commit the changed pointers and corresponding source
+or documentation changes through the Git workflow.
 
-Local (another folder):
-```bash
-dvc remote add -d local /path/to/your/data/store
-```
-
----
-
-## Chapter 2 — Maintenance (day-to-day)
-
-### 2.1 Start a new session (joining an existing project)
+For an explicitly requested upload or restore:
 
 ```bash
-conda activate $myproj
-set -a && source .env && set +a
-dvc pull                        # fetch latest data/artifacts
+uv run dvc push
+uv run dvc status -c
+# Restore the version referenced by the current pointers:
+uv run dvc pull
 ```
 
-### 2.2 Package management
+## Git
+
+Inspect the branch and remote before synchronization:
 
 ```bash
-pip install <package>           # requirements.txt auto-updated by hook
-pip uninstall <package>         # same
+git status --short --branch
+git remote -v
 ```
 
-To manually sync if the hook was not active:
-```bash
-pip freeze > requirements.txt
-```
-
-### 2.3 Run an experiment
-
-Experiments are versioned entirely through **git branches + DVC**.
-
-**Start:**
-```bash
-git checkout dev && git pull
-git checkout -b exp/<id>-<short-description>   # e.g. exp/001-baseline-model
-```
-
-**Work and commit:**
-```bash
-# Edit scripts in src/ ...
-
-dvc add data/processed/my_output.csv           # track large outputs with DVC
-git add data/processed/my_output.csv.dvc src/
-git commit -m "exp: 001 - baseline model"
-dvc push
-```
-
-**Close — merge back to dev:**
-```bash
-git checkout dev
-git merge exp/001-baseline-model
-git push && dvc push
-```
-
-**Revisit a past experiment:**
-```bash
-git checkout exp/001-baseline-model
-dvc pull                                        # restores data/artifacts for that run
-```
-
-### 2.4 DVC — track data and push/pull
-
-```bash
-dvc add data/raw/my_dataset.csv
-git add data/raw/my_dataset.csv.dvc .gitignore
-git commit -m "data: track my_dataset"
-
-dvc push                        # upload to remote
-dvc pull                        # download from remote
-dvc repro                       # re-run pipeline if dvc.yaml is configured
-```
-
-### 2.5 Git commit conventions
-
-| Prefix | Use |
-|--------|-----|
-| `feat` | new feature |
-| `fix` | bug fix |
-| `data` | dataset changes |
-| `exp` | experiment result |
-| `docs` | documentation |
-| `refactor` | code restructure |
-| `build` | Environment, dependencies, or build scripts |
-| `chore` | tooling / config |
-
-### 2.6 HPC (SLURM) — placeholder
-
-```bash
-# Add your cluster-specific sbatch commands here
-```
+`origin` is ESG05h. The existing `main` tracking branch is `secondary/main`
+(ZDP02k); use an explicitly chosen remote when synchronizing. Template remotes
+are read-only sources. Follow `manage-git-workflow` for reviewed commits.

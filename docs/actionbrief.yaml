@@ -285,7 +285,7 @@ variableDictionary:
 tableDictionary:
   Table1:
     tableId: Table 1
-    tablePath: tables/Table1_DescriptiveStats.xlsx
+    tablePath: data/results/tables/Table1_DescriptiveStats.xlsx
     tableCaption: Descriptive Statistics for Key Variables.
     tableAim: Characterise the distribution of outcome, disclosure, and control variables.
     tableExplanation: Rows = variables (7 match scores, 7 pos_mean, 7 neg_mean, sentiment, logMC, ΔlogMC, ROA, leverage, R&D
@@ -293,7 +293,7 @@ tableDictionary:
     tableSuitableSection: Data and Measurement
   Table2:
     tableId: Table 2
-    tablePath: tables/Table2_CrossTopic_Summary.xlsx
+    tablePath: data/results/tables/Table2_CrossTopic_Summary.xlsx
     tableCaption: 'Cross-Topic Coefficient Summary: M1/M2/M3 for all 7 Business Topics.'
     tableAim: Provide a compact overview of all 21 baseline regression coefficients.
     tableExplanation: 'Rows = 5 coefficient types (M1 match; M2 match, sentiment; M3 pos_mean, neg_mean). Columns = 7 Business
@@ -301,7 +301,7 @@ tableDictionary:
     tableSuitableSection: Results — Baseline Association
   Table3:
     tableId: Table 3
-    tablePath: tables/Table3_Mechanism_InfoChannel.xlsx
+    tablePath: data/results/tables/Table3_Mechanism_InfoChannel.xlsx
     tableCaption: 'Mechanism Test 1: Information Channel — Baseline vs. Fundamentals-Controlled M1.'
     tableAim: Show whether the disclosure coefficient survives controlling for ROA and leverage.
     tableExplanation: 'Rows = 7 Business topics. Columns = β baseline, SE, β + controls, SE, attenuation %, N obs. Controls:
@@ -309,7 +309,7 @@ tableDictionary:
     tableSuitableSection: Results — Mechanism Tests
   Table4:
     tableId: Table 4
-    tablePath: tables/Table4_Mechanism_IBESMediation.xlsx
+    tablePath: data/results/tables/Table4_Mechanism_IBESMediation.xlsx
     tableCaption: 'Mechanism Test 2: Analyst Attention Channel (Baron-Kenny IBES Mediation).'
     tableAim: Quantify the analyst-channel proportion of the Business disclosure-MC association.
     tableExplanation: Rows = 7 Business topics. Columns = β S1 (match→IBES rec), β S2a (match→logMC, IBES sample), β S2b (match+rec→logMC),
@@ -317,7 +317,7 @@ tableDictionary:
     tableSuitableSection: Results — Mechanism Tests
   Table5:
     tableId: Table 5
-    tablePath: tables/Table5_Mechanism_SignalDirection.xlsx
+    tablePath: data/results/tables/Table5_Mechanism_SignalDirection.xlsx
     tableCaption: 'Mechanism Test 3: M3 Signal Direction Summary.'
     tableAim: Classify the sign pattern of positive and negative Business disclosure effects per topic.
     tableExplanation: Rows = 7 Business topics. Columns = β pos_mean, SE, β neg_mean, SE, pattern (bilateral signalling /
@@ -325,7 +325,7 @@ tableDictionary:
     tableSuitableSection: Results — Mechanism Tests
   Table6:
     tableId: Table 6
-    tablePath: tables/Table6_Mechanism_ROAQuartile.xlsx
+    tablePath: data/results/tables/Table6_Mechanism_ROAQuartile.xlsx
     tableCaption: 'Mechanism Test 4: ROA Quartile Heterogeneity.'
     tableAim: Test whether Business disclosure premium is larger for lower- or higher-quality firms.
     tableExplanation: Rows = 7 topics × 4 ROA quartiles. Columns = β, SE, N obs, N companies. Q1 = lowest within-year ROA;
@@ -333,7 +333,7 @@ tableDictionary:
     tableSuitableSection: Results — Mechanism Tests
   Table7:
     tableId: Table 7
-    tablePath: tables/Table7_IdentificationRobustness.xlsx
+    tablePath: data/results/tables/Table7_IdentificationRobustness.xlsx
     tableCaption: 'Identification Robustness: M1 Match Coefficient across Six Checks.'
     tableAim: Verify that results are robust to alternative outcomes, sample restrictions, and the t-2 lag identification
       check.
@@ -342,21 +342,21 @@ tableDictionary:
     tableSuitableSection: Results — Identification
   Table8:
     tableId: Table 8
-    tablePath: tables/Table8_SectorHet_M1.xlsx
+    tablePath: data/results/tables/Table8_SectorHet_M1.xlsx
     tableCaption: 'Sector Heterogeneity: M1 Coverage Volume by GICS Sector.'
     tableAim: Identify sector-level variation in the Business disclosure premium.
     tableExplanation: Rows = 7 topics × 11 sectors. Columns = β match, SE, Within R², N obs, N companies.
     tableSuitableSection: Results — Sector Heterogeneity
   Table9:
     tableId: Table 9
-    tablePath: tables/Table9_SectorHet_M3.xlsx
+    tablePath: data/results/tables/Table9_SectorHet_M3.xlsx
     tableCaption: 'Sector Heterogeneity: M3 Positive and Negative Mean by GICS Sector.'
     tableAim: Identify which sectors show bilateral signalling vs. risk-penalty patterns in Business disclosure.
     tableExplanation: Rows = 7 topics × 11 sectors. Columns = β pos_mean, SE, β neg_mean, SE, Within R², N obs, N companies.
     tableSuitableSection: Results — Sector Heterogeneity
   TableS1:
     tableId: Table S1
-    tablePath: tables/S1_Coef_Competitiveness.xlsx
+    tablePath: data/results/tables/S1_Coef_Competitiveness.xlsx
     tableCaption: 'Per-Topic Coefficient Table: Competitiveness (M1 / M2 / M3).'
     tableAim: Report full TWFE regression output for all three specifications (M1, M2, M3) for the Competitiveness topic.
     tableExplanation: 'Rows = specification × variable (M1: Relatedness; M2: Relatedness + Overall Sentiment; M3: Positive
@@ -364,7 +364,7 @@ tableDictionary:
     tableSuitableSection: Online Supplement — Per-Topic Results
   TableS2:
     tableId: Table S2
-    tablePath: tables/S2_Coef_StakeholderCo-creati.xlsx
+    tablePath: data/results/tables/S2_Coef_StakeholderCo-creati.xlsx
     tableCaption: 'Per-Topic Coefficient Table: Stakeholder Co-creation (M1 / M2 / M3).'
     tableAim: Report full TWFE regression output for all three specifications (M1, M2, M3) for the Stakeholder Co-creation
       topic.
@@ -373,7 +373,7 @@ tableDictionary:
     tableSuitableSection: Online Supplement — Per-Topic Results
   TableS3:
     tableId: Table S3
-    tablePath: tables/S3_Coef_BusinessPortfolio.xlsx
+    tablePath: data/results/tables/S3_Coef_BusinessPortfolio.xlsx
     tableCaption: 'Per-Topic Coefficient Table: Business Portfolio (M1 / M2 / M3).'
     tableAim: Report full TWFE regression output for all three specifications (M1, M2, M3) for the Business Portfolio topic.
     tableExplanation: 'Rows = specification × variable (M1: Relatedness; M2: Relatedness + Overall Sentiment; M3: Positive
@@ -381,7 +381,7 @@ tableDictionary:
     tableSuitableSection: Online Supplement — Per-Topic Results
   TableS4:
     tableId: Table S4
-    tablePath: tables/S4_Coef_IntellectualCapital.xlsx
+    tablePath: data/results/tables/S4_Coef_IntellectualCapital.xlsx
     tableCaption: 'Per-Topic Coefficient Table: Intellectual Capital (M1 / M2 / M3).'
     tableAim: Report full TWFE regression output for all three specifications (M1, M2, M3) for the Intellectual Capital topic.
     tableExplanation: 'Rows = specification × variable (M1: Relatedness; M2: Relatedness + Overall Sentiment; M3: Positive
@@ -389,7 +389,7 @@ tableDictionary:
     tableSuitableSection: Online Supplement — Per-Topic Results
   TableS5:
     tableId: Table S5
-    tablePath: tables/S5_Coef_DigitalTransformatio.xlsx
+    tablePath: data/results/tables/S5_Coef_DigitalTransformatio.xlsx
     tableCaption: 'Per-Topic Coefficient Table: Digital Transformation (M1 / M2 / M3).'
     tableAim: Report full TWFE regression output for all three specifications (M1, M2, M3) for the Digital Transformation
       topic.
@@ -398,7 +398,7 @@ tableDictionary:
     tableSuitableSection: Online Supplement — Per-Topic Results
   TableS6:
     tableId: Table S6
-    tablePath: tables/S6_Coef_FinancialMetrics.xlsx
+    tablePath: data/results/tables/S6_Coef_FinancialMetrics.xlsx
     tableCaption: 'Per-Topic Coefficient Table: Financial Metrics (M1 / M2 / M3).'
     tableAim: Report full TWFE regression output for all three specifications (M1, M2, M3) for the Financial Metrics topic.
     tableExplanation: 'Rows = specification × variable (M1: Relatedness; M2: Relatedness + Overall Sentiment; M3: Positive
@@ -406,7 +406,7 @@ tableDictionary:
     tableSuitableSection: Online Supplement — Per-Topic Results
   TableS7:
     tableId: Table S7
-    tablePath: tables/S7_Coef_CorporateValue.xlsx
+    tablePath: data/results/tables/S7_Coef_CorporateValue.xlsx
     tableCaption: 'Per-Topic Coefficient Table: Corporate Value (M1 / M2 / M3).'
     tableAim: Report full TWFE regression output for all three specifications (M1, M2, M3) for the Corporate Value topic.
     tableExplanation: 'Rows = specification × variable (M1: Relatedness; M2: Relatedness + Overall Sentiment; M3: Positive
@@ -415,16 +415,15 @@ tableDictionary:
 figureDictionary:
   fig01:
     figureId: Figure 1
-    figurePath: figures/fig01_business_disclosure_trends.png
-    figureCaption: Business ESG Disclosure Trends, 2016–2025. Cross-sectional mean relatedness score per Business topic and
-      overall ESG sentiment by year.
+    figurePath: data/results/figures/fig01_business_disclosure_trends.png
+    figureCaption: Business Disclosure and Overall ESG Sentiment Trends, 2016–2025.
     figureAim: Establish temporal trends in Business disclosure coverage to motivate the panel regression design.
     figureExplanation: '8 panels (a–g: 7 Business topics, h: overall sentiment). Each panel shows the annual mean relatedness
       (match) score. Upward trends reflect growing Business disclosure intensity over the study period.'
     figureSuitableSection: Data and Measurement
   fig02:
     figureId: Figure 2
-    figurePath: figures/fig02_pos_neg_ratio_trends.png
+    figurePath: data/results/figures/fig02_pos_neg_ratio_trends.png
     figureCaption: Positive vs. Negative Disclosure Ratio Trends by Business Topic, 2016–2025.
     figureAim: Show how the balance between positive and risk-acknowledging Business content evolves over time.
     figureExplanation: '3×3 grid, one panel per Business topic. Green line: positive fragment ratio; red line: negative fragment
@@ -432,7 +431,7 @@ figureDictionary:
     figureSuitableSection: Data and Measurement
   fig03:
     figureId: Figure 3
-    figurePath: figures/fig03_market_cap_distributions.png
+    figurePath: data/results/figures/fig03_market_cap_distributions.png
     figureCaption: Market Capitalisation Distributions by Year.
     figureAim: Characterise the outcome variable distribution and confirm no structural breaks in the panel.
     figureExplanation: 'Two box plots: (a) log MC level, (b) annual log MC growth. Boxes show IQR; whiskers at 10th/90th percentile;
@@ -440,8 +439,8 @@ figureDictionary:
     figureSuitableSection: Data and Measurement
   fig04:
     figureId: Figure 4
-    figurePath: figures/fig04_sector_radar.png
-    figureCaption: Business Disclosure Profile by GICS Sector. z-scored sector mean relative to global average.
+    figurePath: data/results/figures/fig04_sector_radar.png
+    figureCaption: Standardized Business Disclosure Profiles by GICS Sector.
     figureAim: Descriptive overview of which sectors lead or lag the market on Business disclosure dimensions.
     figureExplanation: '11 polar radar panels (one per GICS sector). Each spoke = one Business topic. Three overlaid areas:
       blue = Relatedness, green = Positive Mean, red = Negative Mean. All metrics z-scored as (sector mean − global mean)
@@ -449,7 +448,7 @@ figureDictionary:
     figureSuitableSection: Data and Measurement
   fig05:
     figureId: Figure 5
-    figurePath: figures/fig05_baseline_coef_M1_M3.png
+    figurePath: data/results/figures/fig05_baseline_coef_M1_M3.png
     figureCaption: 'Baseline Association: M1/M2/M3 Coefficients per Business Topic.'
     figureAim: Establish the baseline disclosure-market cap association across all three specifications for each Business
       topic.
@@ -458,7 +457,7 @@ figureDictionary:
     figureSuitableSection: Results — Baseline Association
   fig06:
     figureId: Figure 6
-    figurePath: figures/fig06_mechanism_t1_info_channel.png
+    figurePath: data/results/figures/fig06_mechanism_t1_info_channel.png
     figureCaption: 'Test 1: Information Channel. Baseline M1 vs. M1 with Fundamentals Controls.'
     figureAim: Test whether Business disclosure predicts market cap beyond fundamental quality (ROA + leverage).
     figureExplanation: '7 panels. Each shows two dots: blue (baseline M1) and orange (M1 + ROA + LT leverage controls) on
@@ -466,7 +465,7 @@ figureDictionary:
     figureSuitableSection: Results — Mechanism Tests
   fig07:
     figureId: Figure 7
-    figurePath: figures/fig07_mechanism_t2_ibes_mediation.png
+    figurePath: data/results/figures/fig07_mechanism_t2_ibes_mediation.png
     figureCaption: 'Test 2: Analyst Attention Channel (IBES Mediation).'
     figureAim: Test whether the disclosure-MC association is partly transmitted through analyst recommendation (analyst attention
       channel).
@@ -476,7 +475,7 @@ figureDictionary:
     figureSuitableSection: Results — Mechanism Tests
   fig08:
     figureId: Figure 8
-    figurePath: figures/fig08_mechanism_t3_signal_direction.png
+    figurePath: data/results/figures/fig08_mechanism_t3_signal_direction.png
     figureCaption: 'Test 3: M3 Signal Direction — Positive vs. Negative Business Disclosure.'
     figureAim: Determine whether positive and risk-acknowledging Business content carry the same or opposite valuation effects
       (bilateral signalling vs. risk penalty).
@@ -485,7 +484,7 @@ figureDictionary:
     figureSuitableSection: Results — Mechanism Tests
   fig09:
     figureId: Figure 9
-    figurePath: figures/fig09_mechanism_t4_roa_quartile.png
+    figurePath: data/results/figures/fig09_mechanism_t4_roa_quartile.png
     figureCaption: 'Test 4: ROA Quartile Heterogeneity.'
     figureAim: Distinguish signalling theory (stronger for low-ROA firms) from complementarity (stronger for high-ROA firms).
     figureExplanation: 7 panels. Four dots per panel, one per within-year ROA quartile (Q1 low → Q4 high). If the coefficient
@@ -493,7 +492,7 @@ figureDictionary:
     figureSuitableSection: Results — Mechanism Tests
   fig10:
     figureId: Figure 10
-    figurePath: figures/fig10_identification_robustness.png
+    figurePath: data/results/figures/fig10_identification_robustness.png
     figureCaption: 'Identification Robustness: M1 Match Coefficient across Six Checks.'
     figureAim: Verify that the baseline association is not driven by reverse causality, COVID shock, sample attrition, or
       outliers.
@@ -502,7 +501,7 @@ figureDictionary:
     figureSuitableSection: Results — Identification
   fig11:
     figureId: Figure 11
-    figurePath: figures/fig11_sector_heterogeneity_M1.png
+    figurePath: data/results/figures/fig11_sector_heterogeneity_M1.png
     figureCaption: 'Sector Heterogeneity: M1 Coverage Volume Coefficient by GICS Sector.'
     figureAim: Identify which GICS sectors show the strongest Business disclosure premium.
     figureExplanation: 7 panels. Sectors sorted by coefficient magnitude. Error bars = 95% CI. Sectors with small sample (Utilities

@@ -514,9 +514,9 @@ One table per specification, all topics, with β and SE per sector.
 
 # 10. Relationship with Jiazi
 
-The analysis repository provides artifacts to Jiazi through the `export/` interface.
+The analysis repository provides figures, tables, reproducible scripts and the content dictionary to the manuscript workflow.
 
-Exported artifacts include:
+Handoff artifacts include:
 - Figures (PNG/SVG)
 - Regression tables (CSV/LaTeX)
 - Reproducible scripts
