@@ -2,7 +2,17 @@
 name = "mproj_template"
 version = "2.0.3"
 description = "My project description"
-dependencies = []
+dependencies = [
+    "dvc>=3.67.1",
+    "matplotlib>=3.10,<4",
+    "numpy>=2,<3",
+    "openpyxl>=3.1,<4",
+    "pandas>=2.2,<3",
+    "pyarrow>=19,<25",
+    "pyyaml>=6,<7",
+    "scipy>=1.15,<2",
+    "statsmodels>=0.14.6,<0.15",
+]
 
 authors = [
   { name = "Mike C. Li"}

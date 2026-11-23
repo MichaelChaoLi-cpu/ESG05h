@@ -1,28 +1,19 @@
 # ESG05h: Business Disclosure and Market Capitalisation
 
-Mechanism study of how Business/Strategy ESG disclosure is associated with
-market capitalisation among Japanese listed companies.
+A conditional-association study of Business/Strategy disclosure and market
+capitalisation among Japanese listed companies. The project combines supplied
+NLP scores with LSEG financial data and IBES recommendations.
 
-The project links fragment-level NLP scores from Japanese securities reports
-with LSEG market capitalisation, fundamentals, GICS sector classifications, and
-IBES analyst consensus data. The analysis follows the project SOP in
-[docs/AnaSOP.md](docs/AnaSOP.md) and supports the manuscript draft
-[docs/ZDP02k-v010.pdf](docs/ZDP02k-v010.pdf).
+The current manuscript is [ESG05h_8000words_revised.docx](article/show/ESG05h_8000words_revised.docx).
+See [revision notes](article/show/ESG05h_revision_notes.md) for the 2026-09-05
+statistical corrections, changed findings, and remaining evidence gaps.
 
 ## Research Question
 
-Through what channel does Business-related ESG disclosure affect market
-capitalisation among Japanese listed companies?
-
-This is a mechanism study rather than a pure application study. It tests whether
-the valuation association operates through:
-
-- information disclosure beyond observable firm quality;
-- analyst attention and recommendation mediation;
-- directional signal content, separating positive growth signals from risk
-  acknowledgment;
-- information-environment heterogeneity by firm quality, proxied by ROA
-  quartile.
+How do topic relatedness and sentiment scores relate to market capitalisation
+within companies over time, and how sensitive are these associations to financial
+controls, analyst recommendations, sample restrictions, and outcome choice?
+The comparisons do not identify causal mechanisms or valuation premia.
 
 ## Scope
 
@@ -61,92 +52,59 @@ expected to be managed outside Git.
 
 ## Variable Design
 
-Each Business topic is estimated separately to avoid multicollinearity across
-positively correlated topics. Disclosure variables are lagged by one year in the
-baseline models; two-year lags are used for the reverse-causality robustness
-check.
+Each Business topic is estimated separately; these regressions do not identify
+independent topic contributions. Lags use actual calendar years, including t−2.
 
 | Specification | Variables | Interpretation |
 | --- | --- | --- |
-| M1 | `match_{topic}_lag1` | Topic coverage volume |
-| M2 | `match_{topic}_lag1` + `sentiment_mean_lag1` | Topic coverage plus overall document tone |
-| M3 | `tend_{topic}_pos_mean_lag1` + `tend_{topic}_neg_mean_lag1` | Positive growth signal and negative/risk disclosure intensity |
+| M1 | `match_{topic}_lag1` | Normalized semantic relatedness |
+| M2 | M1 + `sentiment_mean_lag1` | Relatedness and overall sentiment |
+| M3 | `tend_{topic}_pos_mean_lag1` + `tend_{topic}_neg_mean_lag1` | Alternative signed-score model without Relatedness |
 
-Baseline model:
-
-```text
-logMC_it = company FE_i + year FE_t + f(disclosure_{i,t-1}) + error_it
-```
-
-Mechanism and robustness extensions add ROA/leverage controls, IBES
-recommendation mediation, ROA-quartile splits, two-year disclosure lags,
-alternative outcomes, COVID-year exclusion, balanced-panel restriction, and
-winsorised growth outcomes.
+Company and year effects are absorbed jointly. Company-clustered CR1 standard
+errors account for absorbed parameters; significance uses t(G−1) inference.
+Within R² includes year effects relative to the company-demeaned outcome.
+Plots show explicitly labelled normal-approximation 95% intervals.
 
 ## Main Findings
 
-Current exported results show:
-
-- M1 coverage is positive and statistically significant for six of seven
-  Business topics; Digital Transformation has the largest baseline coefficient.
-- Corporate Value coverage is negative in the baseline M1 model, but M3 shows a
-  positive risk-transparency component and a negative positive-mean component.
-- ROA and leverage controls do not explain away the M1 association. Attenuation
-  ranges from 5.7% to 16.9%, and all seven controlled coefficients remain
-  statistically significant.
-- IBES mediation is modest. The match coefficient attenuation after adding
-  analyst recommendation is generally small, from about 0.6% to 8.6% for the
-  positive M1 topics.
-- M3 separates the mechanism by topic: Business Portfolio, Intellectual Capital,
-  and Financial Metrics follow a bilateral signalling pattern; Competitiveness,
-  Stakeholder Co-creation, and Digital Transformation show growth-signal/risk
-  penalty patterns; Corporate Value is classified as risk-transparency
-  dominant.
-- The two-year lag check preserves the baseline sign and statistical
-  significance for all seven topics, strengthening the argument against simple
-  contemporaneous reverse causality.
-
-These estimates should be interpreted as within-company conditional
-associations, not as definitive causal effects.
+The corrected baseline uses 29,117 observations from 3,631 companies. M1
+relatedness is significantly positive for Competitiveness, Stakeholder
+Co-creation, Business Portfolio, and Digital Transformation; Corporate Value is
+negative. Intellectual Capital and Financial Metrics are not significant in M1.
+Overall Sentiment is positive in all M2 models. Fundamentals and analyst
+comparisons show sample and specification sensitivity. Only Financial Metrics
+is significant in the reported growth specifications. Subgroup results are
+exploratory; there are no formal between-group contrasts or multiple-testing
+adjustments. Prior studies support TMPT/SAPT validation; documenting the specific upstream measurement configuration remains necessary for replication.
 
 ## Reproduction
 
-Create an environment with Python 3.12 and install the project dependencies.
-The current scripts require at least `numpy`, `pandas`, `openpyxl`, `pyarrow`,
-`matplotlib`, `statsmodels`, and `pyyaml`.
+The project uses Python 3.12 and uv. Initialize the locked environment with:
 
 ```bash
-python3 -m venv .venv
-source .venv/bin/activate
-python -m pip install --upgrade pip
-python -m pip install -r requirements.txt pandas statsmodels pyyaml
+uv sync --locked
 ```
 
-Run the pipeline from the repository root:
+The lockfile includes the analysis dependencies. The corrected pipeline was run
+with Python 3.12.13. Validate the shared estimator with:
 
 ```bash
-# 1. Build the cleaned panel
-python src/01_data_cleaning.py
-
-# 2. Generate the analysis notebook skeleton
-python src/03_analysis.py
-
-# 3. Regenerate figures, tables, metadata, and Jiazi export artifacts
-python src/90_export.py
+uv run python tests/test_panel_methods.py
 ```
 
-Expected primary output:
+Run from the repository root:
 
-```text
-data/processed/panel.parquet
-export/
-  figures/
-  tables/
-  metadata/
-  code/
-  nbs/
-  AnaSOP.md
-  actionbrief.yaml
+```bash
+# Check canonical script paths without changing data
+uv run python src/run_analysis.py --dry-run
+
+# Rebuild the panel, figures, tables and content dictionary
+uv run python src/run_analysis.py
+
+# Optional: generate analysis notebook skeletons (overwrites their notebooks)
+uv run python src/analyses/02_data_inspection.py
+uv run python src/analyses/03_analysis.py
 ```
 
 ## Repository Structure
@@ -154,49 +112,74 @@ export/
 ```text
 ESG05h/
   src/
-    01_data_cleaning.py       # raw data merge and panel construction
-    02_data_inspection.py     # notebook generator for data inspection
-    03_analysis.py            # notebook generator for mechanism analysis
-    90_export.py              # full export pipeline
-    vardict.py                # topic and variable dictionaries
+    preprocessing/01_data_cleaning.py
+    analyses/02_data_inspection.py
+    analyses/03_analysis.py
+    analyses/90_export.py       # writes directly to data/results and docs
+    run_analysis.py             # canonical pipeline entry point
+    vardict.py                  # shared variable definitions
+    exp/
   data/
-    raw/                      # local raw data, Git-ignored
-    processed/                # local processed panel, Git-ignored
+    raw/
+    processed/
+    exp/
+    results/
+      figures/
+      tables/
   docs/
-    AnaSOP.md                 # analysis standard operating procedure
-    ZDP02k-v010.pdf           # manuscript draft
-    LAWS/                     # export/actionbrief schemas
-  export/
-    figures/                  # final figures
-    tables/                   # final regression/descriptive tables
-    metadata/                 # dataset and variable dictionaries
-    code/                     # exported reproducible scripts
-    actionbrief.yaml          # Jiazi ingestion metadata
+    AnaSOP.md
+    actionbrief.yaml            # figure/table paths relative to repository root
+    metadata/
+    framelog/
+    frame-version.md
+    stage-control.md
+    LAWS/                      # historical schemas; current standards live in skills
+  article/
+    origin/
+    show/
 ```
+
+MiliFrame 3.2.2 is registered with current stage `mili`. DVC tracks the six
+standard folders and the two Frame control documents separately. Its default
+remote `storage` is `/Volumes/MikesDataBackup/dvc_remote`.
+
+The old export bundle has been split into canonical code, documentation and
+result directories. Duplicate scripts and the duplicate AnaSOP were removed.
+AnaSOP and result metadata were aligned with the corrected estimation and interpretation in September 2026. This does not certify a complete Una submission audit.
 
 ## Key Artifacts
 
 - [docs/AnaSOP.md](docs/AnaSOP.md): research objective, theory, variable
   construction, estimands, identification strategy, and workflow.
-- [export/actionbrief.yaml](export/actionbrief.yaml): machine-readable summary
+- [docs/actionbrief.yaml](docs/actionbrief.yaml): machine-readable summary
   of datasets, variables, tables, figures, and analysis structure.
-- [export/tables/Table2_CrossTopic_Summary.xlsx](export/tables/Table2_CrossTopic_Summary.xlsx):
+- [data/results/tables/Table2_CrossTopic_Summary.xlsx](data/results/tables/Table2_CrossTopic_Summary.xlsx):
   baseline M1/M2/M3 coefficient matrix.
-- [export/tables/Table3_Mechanism_InfoChannel.xlsx](export/tables/Table3_Mechanism_InfoChannel.xlsx):
-  fundamentals-control attenuation test.
-- [export/tables/Table4_Mechanism_IBESMediation.xlsx](export/tables/Table4_Mechanism_IBESMediation.xlsx):
-  analyst recommendation mediation test.
-- [export/tables/Table5_Mechanism_SignalDirection.xlsx](export/tables/Table5_Mechanism_SignalDirection.xlsx):
-  M3 positive/negative signal classification.
-- [export/tables/Table7_IdentificationRobustness.xlsx](export/tables/Table7_IdentificationRobustness.xlsx):
+- [data/results/tables/Table3_Mechanism_InfoChannel.xlsx](data/results/tables/Table3_Mechanism_InfoChannel.xlsx):
+  same-sample fundamentals comparison.
+- [data/results/tables/Table4_Mechanism_IBESMediation.xlsx](data/results/tables/Table4_Mechanism_IBESMediation.xlsx):
+  analyst recommendation comparison.
+- [data/results/tables/Table5_Mechanism_SignalDirection.xlsx](data/results/tables/Table5_Mechanism_SignalDirection.xlsx):
+  M3 signed-score coefficient summary.
+- [data/results/tables/Table7_IdentificationRobustness.xlsx](data/results/tables/Table7_IdentificationRobustness.xlsx):
   t-2 lag and standard robustness checks.
 
 ## Notes
 
 - IBES covers roughly one third of the panel and is concentrated among larger
-  firms with analyst coverage; mediation results should not be read as fully
+  firms with analyst coverage; analyst comparisons should not be read as fully
   representative of the full sample.
 - R&D coverage is limited, so R&D is used selectively rather than as a full
   baseline control.
 - Utilities and Energy have small sector samples; sector heterogeneity results
   for those groups require caution.
+
+## Dated manuscript build
+
+`src/manuscript/build_8000words_revision.py` uses the archived pre-fix DOCX,
+the reviewed September 5 table snapshot, and current figure PNGs. It is a dated
+revision script: later model changes require a new review of prose and table
+snapshots. Document authoring used the bundled Documents Python runtime with
+python-docx; those authoring dependencies are separate from the analysis lockfile.
+`src/manuscript/verify_8000words_revision.py` compares the delivered Word tables
+and images with current results and checks that bibliography XML is unchanged.
