@@ -15,6 +15,7 @@ import pandas as pd
 
 # Make the shared src dictionary importable from any working directory
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+from panel_methods import calendar_lag
 from vardict import ESG_THEME_EN, PILLAR_THEMES, ENV_TOPICS, SUB_SCORE_SUFFIXES
 
 # ── Paths ─────────────────────────────────────────────────────────────────────
@@ -251,13 +252,9 @@ panel = panel.merge(
     how="left",
 ).drop(columns=["year_lag"], errors="ignore")
 
-# dlog_mc: prefer within-panel diff; fall back to external prior-year log MC
-panel["dlog_mc_internal"] = panel.groupby("stock_code")["log_mc"].diff()
-panel["dlog_mc"] = panel["dlog_mc_internal"].where(
-    panel["dlog_mc_internal"].notna(),
-    panel["log_mc"] - panel["log_mc_prior"],
-)
-panel = panel.drop(columns=["dlog_mc_internal", "log_mc_prior"])
+# Annual change uses the actual prior calendar year, including external coverage.
+panel["dlog_mc"] = panel["log_mc"] - panel["log_mc_prior"]
+panel = panel.drop(columns=["log_mc_prior"])
 
 # Lagged benchmark ESG variables (t-1), used in secondary summary models
 lag_vars = [
@@ -268,11 +265,11 @@ lag_vars = [
 ]
 for v in lag_vars:
     if v in panel.columns:
-        panel[f"{v}_lag1"] = panel.groupby("stock_code")[v].shift(1)
+        panel[f"{v}_lag1"] = calendar_lag(panel, v, 1)
 
 # Individual tendency theme lags (t-1)
 for v in sorted(c for c in panel.columns if c.startswith("tend_")):
-    panel[f"{v}_lag1"] = panel.groupby("stock_code")[v].shift(1)
+    panel[f"{v}_lag1"] = calendar_lag(panel, v, 1)
 
 # Governance topic sub-score lags (t-1) for the decomposition analysis
 env_sub_vars = [
@@ -284,11 +281,11 @@ env_sub_vars = [
 for v in env_sub_vars:
     lag_col = f"{v}_lag1"
     if lag_col not in panel.columns:   # avoid duplicate if already created above
-        panel[lag_col] = panel.groupby("stock_code")[v].shift(1)
+        panel[lag_col] = calendar_lag(panel, v, 1)
 
 # Individual match theme lags (t-1), for topic-level robustness checks
 for v in sorted(c for c in panel.columns if c.startswith("match_")):
-    panel[f"{v}_lag1"] = panel.groupby("stock_code")[v].shift(1)
+    panel[f"{v}_lag1"] = calendar_lag(panel, v, 1)
 
 # Fundamentals and IBES lags (t-1), for use as predetermined controls
 fund_ibes_vars = [
@@ -299,7 +296,7 @@ fund_ibes_vars = [
 ]
 for v in fund_ibes_vars:
     if v in panel.columns:
-        panel[f"{v}_lag1"] = panel.groupby("stock_code")[v].shift(1)
+        panel[f"{v}_lag1"] = calendar_lag(panel, v, 1)
 
 # ── 11. Column ordering ──────────────────────────────────────────────────────
 

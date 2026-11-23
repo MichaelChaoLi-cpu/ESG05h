@@ -25,6 +25,7 @@ import yaml
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from vardict import ENV_TOPICS, ENV_TOPIC_LABELS, SUB_SCORE_SUFFIXES
+from panel_methods import panel_ols, calendar_lag
 
 # ── Paths ─────────────────────────────────────────────────────────────────────
 ROOT   = Path(__file__).resolve().parents[2]
@@ -89,33 +90,10 @@ panel = panel.sort_values(["stock_code", "year"])
 for topic in ENV_TOPICS:
     lag1 = f"match_{topic}_lag1"
     if lag1 in panel.columns:
-        panel[f"match_{topic}_lag2"] = panel.groupby("stock_code")[lag1].shift(1)
+        panel[f"match_{topic}_lag2"] = calendar_lag(panel, f"match_{topic}", 2)
 
 # ── Regression helpers ────────────────────────────────────────────────────────
-def panel_ols(df, y, x_vars, entity_fe=True, time_fe=True, add_rate=False):
-    if isinstance(x_vars, str):
-        x_vars = [x_vars]
-    rate_col  = ["interest_rate"] if add_rate else []
-    cols_need = [y] + x_vars + rate_col + ["stock_code", "year"]
-    df_sub    = df[cols_need].dropna().copy().reset_index(drop=True)
-    if entity_fe:
-        dm_cols = [y] + x_vars
-        em = df_sub.groupby("stock_code")[dm_cols].transform("mean")
-        for col in dm_cols:
-            df_sub[f"w_{col}"] = df_sub[col] - em[col]
-        y_f = f"w_{y}"
-        x_f = " + ".join(f"w_{v}" for v in x_vars)
-    else:
-        y_f = y
-        x_f = " + ".join(x_vars)
-    formula = f"{y_f} ~ {x_f}"
-    if time_fe:
-        formula += " + C(year)"
-    if add_rate:
-        formula += " + interest_rate"
-    return smf.ols(formula, data=df_sub).fit(
-        cov_type="cluster", cov_kwds={"groups": df_sub["stock_code"]}
-    ), len(df_sub), df_sub["stock_code"].nunique()
+from panel_methods import panel_ols, calendar_lag
 
 
 def get_coef(result, var, entity_fe=True):
@@ -329,10 +307,10 @@ for topic in ENV_TOPICS:
     except Exception:
         c_p = se_p = st_p = c_n = se_n = st_n = None; n_m3 = 0
     if c_p is not None and c_n is not None:
-        pattern = ("Bilateral signalling" if c_p > 0 and c_n > 0 else
-                   "Growth signal / Risk penalty" if c_p > 0 and c_n < 0 else
-                   "Risk transparency dominates" if c_p < 0 and c_n > 0 else
-                   "Ambiguous")
+        pattern = ("Positive / Positive" if c_p > 0 and c_n > 0 else
+                   "Positive / Negative" if c_p > 0 and c_n < 0 else
+                   "Negative / Positive" if c_p < 0 and c_n > 0 else
+                   "Negative / Negative")
     else:
         pattern = "n/a"
     mech3_rows.append({
@@ -511,21 +489,14 @@ for idx, sec in enumerate(_sec_list):
         r_c    = r_vals + [r_vals[0]]
         ax.plot(angles_c, r_c, color=col, lw=1.5, zorder=3)
         ax.fill(angles_c, r_c, color=col, alpha=alpha, zorder=2)
-    for i, angle in enumerate(angles):
-        for j, (key, lbl, col, alpha, _) in enumerate(LAYERS):
-            z = rec[key][i]
-            ax.text(angle, r_ann_base + j * DR, f"{z:+.2f}",
-                    ha="center", va="center", fontsize=5.0, color=col,
-                    fontweight="bold",
-                    bbox=dict(boxstyle="round,pad=0.12", fc="white", ec="none", alpha=0.85),
-                    zorder=6)
     ax.set_xticks(angles); ax.set_xticklabels(short_labels, size=7)
     z_ticks = [-1, 0, 1, 2]
     r_ticks = [z + offset for z in z_ticks if z + offset >= 0]
     z_shown = [z for z in z_ticks if z + offset >= 0]
     ax.set_yticks(r_ticks)
     ax.set_yticklabels([f"{z:+d}σ" for z in z_shown], size=6, color="#555")
-    ax.set_ylim(0, None)
+    ax.set_ylim(0, max(all_z) + offset + 0.4)
+    ax.set_rlabel_position(155)
     ax.set_title(f"({LETTERS[idx]}) {sec}", size=9, fontweight="bold", pad=14)
     ax.spines["polar"].set_visible(False)
     ax.grid(color="grey", alpha=0.25, lw=0.5)
@@ -558,7 +529,7 @@ for idx, topic in enumerate(ENV_TOPICS):
     ax.axvline(0, color="#e74c3c", lw=0.9, linestyle="--")
     ax.set_yticks(range(len(plot_rows)))
     ax.set_yticklabels([r["label"] for r in plot_rows], fontsize=7.5)
-    ax.set_xlabel("Coefficient  [95% CI]", fontsize=8)
+    ax.set_xlabel("Coefficient  [normal-approx. 95% CI]", fontsize=8)
     ax.set_title(f"({LETTERS[idx]}) {ENV_TOPIC_LABELS[topic]}", fontsize=9, fontweight="bold")
 hide_unused(axf, len(ENV_TOPICS))
 fig.legend(handles=[mpatches.Patch(color=DIM_COLORS[k], label=v)
@@ -587,7 +558,7 @@ for idx, topic in enumerate(ENV_TOPICS):
             ax.plot(c, i, "o", color=color, ms=7, zorder=3)
     ax.axvline(0, color="#e74c3c", lw=0.9, ls="--")
     ax.set_yticks([0, 1]); ax.set_yticklabels(["Baseline", "+ Controls"], fontsize=8)
-    ax.set_xlabel("Match coef  [95% CI]", fontsize=8)
+    ax.set_xlabel("Match coef  [normal-approx. 95% CI]", fontsize=8)
     ax.set_title(f"({LETTERS[idx]}) {ENV_TOPIC_LABELS[topic]}", fontsize=9, fontweight="bold")
     att = df_mech1.iloc[idx]["Attenuation %"]
     ax.text(0.98, 0.05, f"Atten.: {att}", transform=ax.transAxes,
@@ -613,7 +584,7 @@ for idx, topic in enumerate(ENV_TOPICS):
             ax.plot(c, i, "o", color=color, ms=7, zorder=3)
     ax.axvline(0, color="#e74c3c", lw=0.9, ls="--")
     ax.set_yticks([0, 1]); ax.set_yticklabels(["Baseline", "+ IBES Rec"], fontsize=8)
-    ax.set_xlabel("Match coef  [95% CI]", fontsize=8)
+    ax.set_xlabel("Match coef  [normal-approx. 95% CI]", fontsize=8)
     ax.set_title(f"({LETTERS[idx]}) {ENV_TOPIC_LABELS[topic]}", fontsize=9, fontweight="bold")
     att = row["Attenuation %"]
     ax.text(0.98, 0.05, f"Atten.: {att}", transform=ax.transAxes,
@@ -644,7 +615,7 @@ for i, row in df_mech3.iterrows():
 ax.axhline(0, color="#555", lw=0.9)
 ax.set_xticks(x)
 ax.set_xticklabels([l.replace(" ", "\n") for l in df_mech3["Topic"]], fontsize=8)
-ax.set_ylabel("Coefficient  [TWFE, clustered SE]")
+ax.set_ylabel("Coefficient  [TWFE, normal-approx. 95% CI]")
 ax.legend(fontsize=9)
 plt.tight_layout()
 fig.savefig(FIGS / "fig08_mechanism_t3_signal_direction.png", dpi=FIG_DPI, bbox_inches="tight")
@@ -667,7 +638,7 @@ for idx, topic in enumerate(ENV_TOPICS):
     ax.axvline(0, color="#e74c3c", lw=0.9, ls="--")
     ax.set_yticks(range(len(plot_rows)))
     ax.set_yticklabels([r[0] for r in plot_rows], fontsize=8)
-    ax.set_xlabel("M1 Match coef  [95% CI]", fontsize=8)
+    ax.set_xlabel("M1 Match coef  [normal-approx. 95% CI]", fontsize=8)
     ax.set_title(f"({LETTERS[idx]}) {ENV_TOPIC_LABELS[topic]}", fontsize=9, fontweight="bold")
 hide_unused(axf, len(ENV_TOPICS))
 fig.legend(handles=[mpatches.Patch(color=Q_COLORS[q], label=q) for q in ROA_QUARTILES],
@@ -694,12 +665,12 @@ for idx, topic in enumerate(ENV_TOPICS):
     ax.axvline(0, color="#e74c3c", lw=0.9, ls="--")
     ax.set_yticks(range(len(df_r)))
     ax.set_yticklabels(df_r["Check"].values, fontsize=7.5)
-    ax.set_xlabel("Match coef  [95% CI]", fontsize=8)
+    ax.set_xlabel("Match coef  [normal-approx. 95% CI]", fontsize=8)
     ax.set_title(f"({LETTERS[idx]}) {ENV_TOPIC_LABELS[topic]}", fontsize=9, fontweight="bold")
 hide_unused(axf, len(ENV_TOPICS))
 fig.legend(handles=[
     mpatches.Patch(color=TOPIC_COLORS[ENV_TOPICS[0]], label="Baseline (t−1)"),
-    mpatches.Patch(color="#c0392b", label="t-2 lag (sharpest RC test)"),
+    mpatches.Patch(color="#c0392b", label="t-2 calendar-year lag"),
     mpatches.Patch(color="#555", label="Other checks"),
 ], loc="lower right", fontsize=8, bbox_to_anchor=(0.99, 0.02))
 plt.tight_layout()
@@ -719,7 +690,7 @@ for idx, topic in enumerate(ENV_TOPICS):
                 fmt="o", color=color, ms=5, ecolor="#aaa", elinewidth=1.2, capsize=3)
     ax.axvline(0, color="#e74c3c", lw=0.9, ls="--")
     ax.set_yticks(range(len(df_s))); ax.set_yticklabels(df_s["Sector"].values, fontsize=8)
-    ax.set_xlabel("M1 Relatedness  [95% CI]", fontsize=8)
+    ax.set_xlabel("M1 Relatedness  [normal-approx. 95% CI]", fontsize=8)
     ax.set_title(f"({LETTERS[idx]}) {ENV_TOPIC_LABELS[topic]}", fontsize=9, fontweight="bold")
 hide_unused(axf, len(ENV_TOPICS))
 plt.tight_layout()
@@ -921,7 +892,7 @@ for topic in ENV_TOPICS:
         "variableNameInArticle": f"{lbl} — Relatedness (t-1)",
         "variableAttribute": "continuous",
         "variableUnit": "index [0,1]",
-        "variableDescription": f"M1 variable. Coverage volume for {lbl} topic, lagged 1 year.",
+        "variableDescription": f"M1 variable. Normalized average semantic alignment for {lbl}; exact prior-calendar-year match, not an absolute disclosure count.",
         "variableSource": "nlp_scores",
         "observationNumber": int(panel[f"match_{topic}_lag1"].notna().sum()),
     }
@@ -930,7 +901,7 @@ for topic in ENV_TOPICS:
         "variableNameInArticle": f"{lbl} — Positive Mean Score (t-1)",
         "variableAttribute": "continuous",
         "variableUnit": "index (positive)",
-        "variableDescription": f"M3 variable. Mean positive-sentiment intensity among {lbl}-related fragments, lagged 1 year.",
+        "variableDescription": f"M3 variable. Mean similarity-weighted positive-sentiment intensity among {lbl}-related fragments, lagged 1 year.",
         "variableSource": "nlp_scores",
         "observationNumber": int(panel[f"tend_{topic}_pos_mean_lag1"].notna().sum()),
     }
@@ -939,7 +910,7 @@ for topic in ENV_TOPICS:
         "variableNameInArticle": f"{lbl} — Negative Mean Score (t-1)",
         "variableAttribute": "continuous",
         "variableUnit": "index (negative)",
-        "variableDescription": f"M3 variable. Mean negative-sentiment intensity among {lbl}-related fragments, lagged 1 year.",
+        "variableDescription": f"M3 variable. Mean signed similarity-weighted negative-sentiment intensity among {lbl}-related fragments, lagged 1 year.",
         "variableSource": "nlp_scores",
         "observationNumber": int(panel[f"tend_{topic}_neg_mean_lag1"].notna().sum()),
     }
@@ -1025,171 +996,292 @@ print("  Metadata done.")
 # ══════════════════════════════════════════════════════════════════════════════
 print("Writing actionbrief.yaml...")
 
-figure_dict = {
-    "fig01": {
-        "figureId": "Figure 1",
-        "figurePath": "data/results/figures/fig01_business_disclosure_trends.png",
-        "figureCaption": "Business Disclosure and Overall ESG Sentiment Trends, 2016–2025.",
-        "figureAim": "Establish temporal trends in Business disclosure coverage to motivate the panel regression design.",
-        "figureExplanation": "8 panels (a–g: 7 Business topics, h: overall sentiment). Each panel shows the annual mean relatedness (match) score. Upward trends reflect growing Business disclosure intensity over the study period.",
-        "figureSuitableSection": "Data and Measurement",
-    },
-    "fig02": {
-        "figureId": "Figure 2",
-        "figurePath": "data/results/figures/fig02_pos_neg_ratio_trends.png",
-        "figureCaption": "Positive vs. Negative Disclosure Ratio Trends by Business Topic, 2016–2025.",
-        "figureAim": "Show how the balance between positive and risk-acknowledging Business content evolves over time.",
-        "figureExplanation": "3×3 grid, one panel per Business topic. Green line: positive fragment ratio; red line: negative fragment ratio. A widening gap suggests growing asymmetry in disclosure tone.",
-        "figureSuitableSection": "Data and Measurement",
-    },
-    "fig03": {
-        "figureId": "Figure 3",
-        "figurePath": "data/results/figures/fig03_market_cap_distributions.png",
-        "figureCaption": "Market Capitalisation Distributions by Year.",
-        "figureAim": "Characterise the outcome variable distribution and confirm no structural breaks in the panel.",
-        "figureExplanation": "Two box plots: (a) log MC level, (b) annual log MC growth. Boxes show IQR; whiskers at 10th/90th percentile; white dot = median. Dark teal = level; coral = growth.",
-        "figureSuitableSection": "Data and Measurement",
-    },
-    "fig04": {
-        "figureId": "Figure 4",
-        "figurePath": "data/results/figures/fig04_sector_radar.png",
-        "figureCaption": "Standardized Business Disclosure Profiles by GICS Sector.",
-        "figureAim": "Descriptive overview of which sectors lead or lag the market on Business disclosure dimensions.",
-        "figureExplanation": "11 polar radar panels (one per GICS sector). Each spoke = one Business topic. Three overlaid areas: blue = Relatedness, green = Positive Mean, red = Negative Mean. All metrics z-scored as (sector mean − global mean) / global σ. Dashed circle = global average (z=0).",
-        "figureSuitableSection": "Data and Measurement",
-    },
-    "fig05": {
-        "figureId": "Figure 5",
-        "figurePath": "data/results/figures/fig05_baseline_coef_M1_M3.png",
-        "figureCaption": "Baseline Association: M1/M2/M3 Coefficients per Business Topic.",
-        "figureAim": "Establish the baseline disclosure-market cap association across all three specifications for each Business topic.",
-        "figureExplanation": "3×3 grid, one panel per topic (7 panels, 2 hidden). Horizontal CI plots: blue dots = M1/M2 coverage; purple = sentiment; green = positive mean; red = negative mean. Dashed red vertical = zero. Error bars = 95% CI.",
-        "figureSuitableSection": "Results — Baseline Association",
-    },
-    "fig06": {
-        "figureId": "Figure 6",
-        "figurePath": "data/results/figures/fig06_mechanism_t1_info_channel.png",
-        "figureCaption": "Test 1: Information Channel. Baseline M1 vs. M1 with Fundamentals Controls.",
-        "figureAim": "Test whether Business disclosure predicts market cap beyond fundamental quality (ROA + leverage).",
-        "figureExplanation": "7 panels. Each shows two dots: blue (baseline M1) and orange (M1 + ROA + LT leverage controls) on the same sample. Attenuation % shown in panel corner. If orange dot remains significant, information channel is confirmed.",
-        "figureSuitableSection": "Results — Mechanism Tests",
-    },
-    "fig07": {
-        "figureId": "Figure 7",
-        "figurePath": "data/results/figures/fig07_mechanism_t2_ibes_mediation.png",
-        "figureCaption": "Test 2: Analyst Attention Channel (IBES Mediation).",
-        "figureAim": "Test whether the disclosure-MC association is partly transmitted through analyst recommendation (analyst attention channel).",
-        "figureExplanation": "7 panels. Blue dot = match coefficient in IBES sample (S2a); purple dot = match coefficient after adding analyst recommendation control (S2b). Attenuation % = coefficient shrinkage. Larger attenuation signals stronger analyst mediation.",
-        "figureSuitableSection": "Results — Mechanism Tests",
-    },
-    "fig08": {
-        "figureId": "Figure 8",
-        "figurePath": "data/results/figures/fig08_mechanism_t3_signal_direction.png",
-        "figureCaption": "Test 3: M3 Signal Direction — Positive vs. Negative Business Disclosure.",
-        "figureAim": "Determine whether positive and risk-acknowledging Business content carry the same or opposite valuation effects (bilateral signalling vs. risk penalty).",
-        "figureExplanation": "Grouped bar chart. Green bars = pos_mean coefficient; red bars = neg_mean coefficient. Both above zero → bilateral signalling (transparency premium). Neg bar below zero → risk penalty. One group per Business topic.",
-        "figureSuitableSection": "Results — Mechanism Tests",
-    },
-    "fig09": {
-        "figureId": "Figure 9",
-        "figurePath": "data/results/figures/fig09_mechanism_t4_roa_quartile.png",
-        "figureCaption": "Test 4: ROA Quartile Heterogeneity.",
-        "figureAim": "Distinguish signalling theory (stronger for low-ROA firms) from complementarity (stronger for high-ROA firms).",
-        "figureExplanation": "7 panels. Four dots per panel, one per within-year ROA quartile (Q1 low → Q4 high). If the coefficient decreases monotonically from Q1 to Q4, signalling dominates. If it increases, complementarity dominates.",
-        "figureSuitableSection": "Results — Mechanism Tests",
-    },
-    "fig10": {
-        "figureId": "Figure 10",
-        "figurePath": "data/results/figures/fig10_identification_robustness.png",
-        "figureCaption": "Identification Robustness: M1 Match Coefficient across Six Checks.",
-        "figureAim": "Verify that the baseline association is not driven by reverse causality, COVID shock, sample attrition, or outliers.",
-        "figureExplanation": "7 panels. Topic-coloured dot = baseline (t-1). Red dot = t-2 lag (hardest reverse-causality test). Grey dots = R2–R5. Error bars = 95% CI. Consistent sign and approximate magnitude across checks supports robustness.",
-        "figureSuitableSection": "Results — Identification",
-    },
-    "fig11": {
-        "figureId": "Figure 11",
-        "figurePath": "data/results/figures/fig11_sector_heterogeneity_M1.png",
-        "figureCaption": "Sector Heterogeneity: M1 Coverage Volume Coefficient by GICS Sector.",
-        "figureAim": "Identify which GICS sectors show the strongest Business disclosure premium.",
-        "figureExplanation": "7 panels. Sectors sorted by coefficient magnitude. Error bars = 95% CI. Sectors with small sample (Utilities N=33, Energy N=26) should be interpreted cautiously.",
-        "figureSuitableSection": "Results — Sector Heterogeneity",
-    },
-}
+figure_dict = {'fig01': {'figureId': 'Figure 1',
+           'figurePath': 'data/results/figures/fig01_business_disclosure_trends.png',
+           'figureCaption': 'Business Disclosure and Overall ESG Sentiment Trends, 2016–2025.',
+           'figureAim': 'Establish temporal trends in Business disclosure coverage to motivate the panel '
+                        'regression design.',
+           'figureExplanation': '8 panels (a–g: 7 Business topics, h: overall sentiment). Each panel shows '
+                                'the annual mean relatedness (match) score. Upward trends reflect growing '
+                                'Business disclosure intensity over the study period.',
+           'figureSuitableSection': 'Data and Measurement'},
+ 'fig02': {'figureId': 'Figure 2',
+           'figurePath': 'data/results/figures/fig02_pos_neg_ratio_trends.png',
+           'figureCaption': 'Positive vs. Negative Disclosure Ratio Trends by Business Topic, 2016–2025.',
+           'figureAim': 'Show how the balance between positive and risk-acknowledging Business content '
+                        'evolves over time.',
+           'figureExplanation': '3×3 grid, one panel per Business topic. Green line: positive fragment '
+                                'ratio; red line: negative fragment ratio. A widening gap suggests growing '
+                                'asymmetry in disclosure tone.',
+           'figureSuitableSection': 'Data and Measurement'},
+ 'fig03': {'figureId': 'Figure 3',
+           'figurePath': 'data/results/figures/fig03_market_cap_distributions.png',
+           'figureCaption': 'Market Capitalisation Distributions by Year.',
+           'figureAim': 'Characterise the outcome variable distribution and confirm no structural breaks in '
+                        'the panel.',
+           'figureExplanation': 'Two box plots: (a) log MC level, (b) annual log MC growth. Boxes show IQR; '
+                                'whiskers at 10th/90th percentile; white dot = median. Dark teal = level; '
+                                'coral = growth.',
+           'figureSuitableSection': 'Data and Measurement'},
+ 'fig04': {'figureId': 'Figure 4',
+           'figurePath': 'data/results/figures/fig04_sector_radar.png',
+           'figureCaption': 'Standardized Business Disclosure Profiles by GICS Sector.',
+           'figureAim': 'Descriptive overview of which sectors lead or lag the market on Business disclosure '
+                        'dimensions.',
+           'figureExplanation': '11 polar radar panels (one per GICS sector). Each spoke = one Business '
+                                'topic. Three overlaid areas: blue = Relatedness, green = Positive Mean, red '
+                                '= Negative Mean. All metrics z-scored as (sector mean − global mean) / '
+                                'global σ. Dashed circle = global average (z=0).',
+           'figureSuitableSection': 'Data and Measurement'},
+ 'fig05': {'figureId': 'Figure 5',
+           'figurePath': 'data/results/figures/fig05_baseline_coef_M1_M3.png',
+           'figureCaption': 'Baseline Association: M1/M2/M3 Coefficients per Business Topic.',
+           'figureAim': 'Establish the baseline disclosure-market cap association across all three '
+                        'specifications for each Business topic.',
+           'figureExplanation': '3×3 grid, one panel per topic (7 panels, 2 hidden). Horizontal CI plots: '
+                                'blue dots = M1/M2 coverage; purple = sentiment; green = positive mean; red '
+                                '= negative mean. Dashed red vertical = zero. Error bars = 95% CI.',
+           'figureSuitableSection': 'Results — Baseline Association'},
+ 'fig06': {'figureId': 'Figure 6',
+           'figurePath': 'data/results/figures/fig06_mechanism_t1_info_channel.png',
+           'figureCaption': 'Test 1: Information Channel. Baseline M1 vs. M1 with Fundamentals Controls.',
+           'figureAim': 'Assess same-sample sensitivity to lagged ROA and leverage.',
+           'figureExplanation': 'Coefficient attenuation is not a causal proportion and no arbitrary '
+                                'threshold establishes a channel. Joint company and year fixed effects: '
+                                'outcome, regressors and year indicators are projected off company '
+                                'indicators. Company-clustered CR1 uses full-model residual degrees of '
+                                'freedom; p-values use t(G-1). Within R² includes year effects relative to '
+                                'the company-demeaned outcome. Plot intervals are normal-approximation 95% '
+                                'intervals (coefficient +/- 1.96 SE).',
+           'figureSuitableSection': 'Results — Mechanism Tests'},
+ 'fig07': {'figureId': 'Figure 7',
+           'figurePath': 'data/results/figures/fig07_mechanism_t2_ibes_mediation.png',
+           'figureCaption': 'Test 2: Analyst Recommendation Comparison.',
+           'figureAim': 'Assess associations with analyst recommendations and same-sample adjustment.',
+           'figureExplanation': 'Stage 1 uses current recommendations; stage 2 controls lagged '
+                                'recommendations. Different timing and samples do not identify mediation. '
+                                'Recommendations measure assessment, not attention. Joint company and year '
+                                'fixed effects: outcome, regressors and year indicators are projected off '
+                                'company indicators. Company-clustered CR1 uses full-model residual degrees '
+                                'of freedom; p-values use t(G-1). Within R² includes year effects relative '
+                                'to the company-demeaned outcome. Plot intervals are normal-approximation '
+                                '95% intervals (coefficient +/- 1.96 SE).',
+           'figureSuitableSection': 'Results — Mechanism Tests'},
+ 'fig08': {'figureId': 'Figure 8',
+           'figurePath': 'data/results/figures/fig08_mechanism_t3_signal_direction.png',
+           'figureCaption': 'Test 3: M3 Signal Direction — Positive vs. Negative Business Disclosure.',
+           'figureAim': 'Describe signed positive and negative score coefficients.',
+           'figureExplanation': 'Negative Mean is signed: a more negative value is a decrease. Pattern '
+                                'labels describe coefficient signs, not established mechanisms. Joint '
+                                'company and year fixed effects: outcome, regressors and year indicators are '
+                                'projected off company indicators. Company-clustered CR1 uses full-model '
+                                'residual degrees of freedom; p-values use t(G-1). Within R² includes year '
+                                'effects relative to the company-demeaned outcome. Plot intervals are '
+                                'normal-approximation 95% intervals (coefficient +/- 1.96 SE).',
+           'figureSuitableSection': 'Results — Mechanism Tests'},
+ 'fig09': {'figureId': 'Figure 9',
+           'figurePath': 'data/results/figures/fig09_mechanism_t4_roa_quartile.png',
+           'figureCaption': 'Test 4: ROA Quartile Heterogeneity.',
+           'figureAim': 'Explore associations across contemporaneous ROA quartiles.',
+           'figureExplanation': 'Current ROA groups can change over time. Separate significance does not '
+                                'establish between-group differences. Joint company and year fixed effects: '
+                                'outcome, regressors and year indicators are projected off company '
+                                'indicators. Company-clustered CR1 uses full-model residual degrees of '
+                                'freedom; p-values use t(G-1). Within R² includes year effects relative to '
+                                'the company-demeaned outcome. Plot intervals are normal-approximation 95% '
+                                'intervals (coefficient +/- 1.96 SE).',
+           'figureSuitableSection': 'Results — Mechanism Tests'},
+ 'fig10': {'figureId': 'Figure 10',
+           'figurePath': 'data/results/figures/fig10_identification_robustness.png',
+           'figureCaption': 'Specification Sensitivity: M1 Match Coefficient across Six Checks.',
+           'figureAim': 'Assess alternative timing, outcomes and sample definitions.',
+           'figureExplanation': 'R0 is baseline plus five alternatives. Longer lags do not rule out reverse '
+                                'causality; growth is a different outcome. Joint company and year fixed '
+                                'effects: outcome, regressors and year indicators are projected off company '
+                                'indicators. Company-clustered CR1 uses full-model residual degrees of '
+                                'freedom; p-values use t(G-1). Within R² includes year effects relative to '
+                                'the company-demeaned outcome. Plot intervals are normal-approximation 95% '
+                                'intervals (coefficient +/- 1.96 SE).',
+           'figureSuitableSection': 'Results — Identification'},
+ 'fig11': {'figureId': 'Figure 11',
+           'figurePath': 'data/results/figures/fig11_sector_heterogeneity_M1.png',
+           'figureCaption': 'Sector Heterogeneity: M1 Relatedness Coefficient by GICS Sector.',
+           'figureAim': 'Explore topic associations within industries; no confirmed sector rankings.',
+           'figureExplanation': 'Exploratory comparisons involve multiple testing and some small company '
+                                'clusters. No adjusted p-values or formal between-sector contrasts are '
+                                'reported. Joint company and year fixed effects: outcome, regressors and '
+                                'year indicators are projected off company indicators. Company-clustered CR1 '
+                                'uses full-model residual degrees of freedom; p-values use t(G-1). Within R² '
+                                'includes year effects relative to the company-demeaned outcome. Plot '
+                                'intervals are normal-approximation 95% intervals (coefficient +/- 1.96 SE).',
+           'figureSuitableSection': 'Results — Sector Heterogeneity'}}
 
-table_dict = {
-    "Table1": {
-        "tableId": "Table 1",
-        "tablePath": "data/results/tables/Table1_DescriptiveStats.xlsx",
-        "tableCaption": "Descriptive Statistics for Key Variables.",
-        "tableAim": "Characterise the distribution of outcome, disclosure, and control variables.",
-        "tableExplanation": "Rows = variables (7 match scores, 7 pos_mean, 7 neg_mean, sentiment, logMC, ΔlogMC, ROA, leverage, R&D share, IBES rec). Columns = N, mean, SD, min, p25, p50, p75, max.",
-        "tableSuitableSection": "Data and Measurement",
-    },
-    "Table2": {
-        "tableId": "Table 2",
-        "tablePath": "data/results/tables/Table2_CrossTopic_Summary.xlsx",
-        "tableCaption": "Cross-Topic Coefficient Summary: M1/M2/M3 for all 7 Business Topics.",
-        "tableAim": "Provide a compact overview of all 21 baseline regression coefficients.",
-        "tableExplanation": "Rows = 5 coefficient types (M1 match; M2 match, sentiment; M3 pos_mean, neg_mean). Columns = 7 Business topics. β and SE shown; stars: * p<0.10, ** p<0.05, *** p<0.01.",
-        "tableSuitableSection": "Results — Baseline Association",
-    },
-    "Table3": {
-        "tableId": "Table 3",
-        "tablePath": "data/results/tables/Table3_Mechanism_InfoChannel.xlsx",
-        "tableCaption": "Mechanism Test 1: Information Channel — Baseline vs. Fundamentals-Controlled M1.",
-        "tableAim": "Show whether the disclosure coefficient survives controlling for ROA and leverage.",
-        "tableExplanation": "Rows = 7 Business topics. Columns = β baseline, SE, β + controls, SE, attenuation %, N obs. Controls: ROA (t-1) + LT Debt/Assets (t-1), same sample.",
-        "tableSuitableSection": "Results — Mechanism Tests",
-    },
-    "Table4": {
-        "tableId": "Table 4",
-        "tablePath": "data/results/tables/Table4_Mechanism_IBESMediation.xlsx",
-        "tableCaption": "Mechanism Test 2: Analyst Attention Channel (Baron-Kenny IBES Mediation).",
-        "tableAim": "Quantify the analyst-channel proportion of the Business disclosure-MC association.",
-        "tableExplanation": "Rows = 7 Business topics. Columns = β S1 (match→IBES rec), β S2a (match→logMC, IBES sample), β S2b (match+rec→logMC), β S2b (rec→logMC), attenuation %, N (IBES).",
-        "tableSuitableSection": "Results — Mechanism Tests",
-    },
-    "Table5": {
-        "tableId": "Table 5",
-        "tablePath": "data/results/tables/Table5_Mechanism_SignalDirection.xlsx",
-        "tableCaption": "Mechanism Test 3: M3 Signal Direction Summary.",
-        "tableAim": "Classify the sign pattern of positive and negative Business disclosure effects per topic.",
-        "tableExplanation": "Rows = 7 Business topics. Columns = β pos_mean, SE, β neg_mean, SE, pattern (bilateral signalling / risk penalty / transparency dominates / ambiguous), N obs.",
-        "tableSuitableSection": "Results — Mechanism Tests",
-    },
-    "Table6": {
-        "tableId": "Table 6",
-        "tablePath": "data/results/tables/Table6_Mechanism_ROAQuartile.xlsx",
-        "tableCaption": "Mechanism Test 4: ROA Quartile Heterogeneity.",
-        "tableAim": "Test whether Business disclosure premium is larger for lower- or higher-quality firms.",
-        "tableExplanation": "Rows = 7 topics × 4 ROA quartiles. Columns = β, SE, N obs, N companies. Q1 = lowest within-year ROA; Q4 = highest.",
-        "tableSuitableSection": "Results — Mechanism Tests",
-    },
-    "Table7": {
-        "tableId": "Table 7",
-        "tablePath": "data/results/tables/Table7_IdentificationRobustness.xlsx",
-        "tableCaption": "Identification Robustness: M1 Match Coefficient across Six Checks.",
-        "tableAim": "Verify that results are robust to alternative outcomes, sample restrictions, and the t-2 lag identification check.",
-        "tableExplanation": "Rows = 7 topics × 6 checks (R0 baseline, R1 t-2 lag, R2 ΔlogMC, R3 excl. 2020, R4 balanced panel, R5 win. ΔlogMC). Columns = β, SE, outcome, N obs, N co., R².",
-        "tableSuitableSection": "Results — Identification",
-    },
-    "Table8": {
-        "tableId": "Table 8",
-        "tablePath": "data/results/tables/Table8_SectorHet_M1.xlsx",
-        "tableCaption": "Sector Heterogeneity: M1 Coverage Volume by GICS Sector.",
-        "tableAim": "Identify sector-level variation in the Business disclosure premium.",
-        "tableExplanation": "Rows = 7 topics × 11 sectors. Columns = β match, SE, Within R², N obs, N companies.",
-        "tableSuitableSection": "Results — Sector Heterogeneity",
-    },
-    "Table9": {
-        "tableId": "Table 9",
-        "tablePath": "data/results/tables/Table9_SectorHet_M3.xlsx",
-        "tableCaption": "Sector Heterogeneity: M3 Positive and Negative Mean by GICS Sector.",
-        "tableAim": "Identify which sectors show bilateral signalling vs. risk-penalty patterns in Business disclosure.",
-        "tableExplanation": "Rows = 7 topics × 11 sectors. Columns = β pos_mean, SE, β neg_mean, SE, Within R², N obs, N companies.",
-        "tableSuitableSection": "Results — Sector Heterogeneity",
-    },
-}
+table_dict = {'Table1': {'tableId': 'Table 1',
+            'tablePath': 'data/results/tables/Table1_DescriptiveStats.xlsx',
+            'tableCaption': 'Descriptive Statistics for Key Variables.',
+            'tableAim': 'Characterise the distribution of outcome, disclosure, and control variables.',
+            'tableExplanation': 'Rows = variables (7 match scores, 7 pos_mean, 7 neg_mean, sentiment, logMC, '
+                                'ΔlogMC, ROA, leverage, R&D share, IBES rec). Columns = N, mean, SD, min, '
+                                'p25, p50, p75, max.',
+            'tableSuitableSection': 'Data and Measurement'},
+ 'Table2': {'tableId': 'Table 2',
+            'tablePath': 'data/results/tables/Table2_CrossTopic_Summary.xlsx',
+            'tableCaption': 'Cross-Topic Coefficient Summary: M1/M2/M3 for all 7 Business Topics.',
+            'tableAim': 'Provide a compact overview of all 21 baseline regression coefficients.',
+            'tableExplanation': 'Rows = 5 coefficient types (M1 match; M2 match, sentiment; M3 pos_mean, '
+                                'neg_mean). Columns = 7 Business topics. β and SE shown; stars: * p<0.10, ** '
+                                'p<0.05, *** p<0.01.',
+            'tableSuitableSection': 'Results — Baseline Association'},
+ 'Table3': {'tableId': 'Table 3',
+            'tablePath': 'data/results/tables/Table3_Mechanism_InfoChannel.xlsx',
+            'tableCaption': 'Descriptive Test 1: Information Channel — Baseline vs. Fundamentals-Controlled '
+                            'M1.',
+            'tableAim': 'Assess same-sample sensitivity to lagged ROA and leverage.',
+            'tableExplanation': 'Coefficient attenuation is not a causal proportion and no arbitrary '
+                                'threshold establishes a channel. Joint company and year fixed effects: '
+                                'outcome, regressors and year indicators are projected off company '
+                                'indicators. Company-clustered CR1 uses full-model residual degrees of '
+                                'freedom; p-values use t(G-1). Within R² includes year effects relative to '
+                                'the company-demeaned outcome. Plot intervals are normal-approximation 95% '
+                                'intervals (coefficient +/- 1.96 SE).',
+            'tableSuitableSection': 'Results — Mechanism Tests'},
+ 'Table4': {'tableId': 'Table 4',
+            'tablePath': 'data/results/tables/Table4_Mechanism_IBESMediation.xlsx',
+            'tableCaption': 'Descriptive Test 2: Analyst Attention Channel (Baron-Kenny IBES Recommendation '
+                            'Comparison).',
+            'tableAim': 'Assess associations with analyst recommendations and same-sample adjustment.',
+            'tableExplanation': 'Stage 1 uses current recommendations; stage 2 controls lagged '
+                                'recommendations. Different timing and samples do not identify mediation. '
+                                'Recommendations measure assessment, not attention. Joint company and year '
+                                'fixed effects: outcome, regressors and year indicators are projected off '
+                                'company indicators. Company-clustered CR1 uses full-model residual degrees '
+                                'of freedom; p-values use t(G-1). Within R² includes year effects relative '
+                                'to the company-demeaned outcome. Plot intervals are normal-approximation '
+                                '95% intervals (coefficient +/- 1.96 SE).',
+            'tableSuitableSection': 'Results — Mechanism Tests'},
+ 'Table5': {'tableId': 'Table 5',
+            'tablePath': 'data/results/tables/Table5_Mechanism_SignalDirection.xlsx',
+            'tableCaption': 'Descriptive Test 3: M3 Signal Direction Summary.',
+            'tableAim': 'Describe signed positive and negative score coefficients.',
+            'tableExplanation': 'Negative Mean is signed: a more negative value is a decrease. Pattern '
+                                'labels describe coefficient signs, not established mechanisms. Joint '
+                                'company and year fixed effects: outcome, regressors and year indicators are '
+                                'projected off company indicators. Company-clustered CR1 uses full-model '
+                                'residual degrees of freedom; p-values use t(G-1). Within R² includes year '
+                                'effects relative to the company-demeaned outcome. Plot intervals are '
+                                'normal-approximation 95% intervals (coefficient +/- 1.96 SE).',
+            'tableSuitableSection': 'Results — Mechanism Tests'},
+ 'Table6': {'tableId': 'Table 6',
+            'tablePath': 'data/results/tables/Table6_Mechanism_ROAQuartile.xlsx',
+            'tableCaption': 'Descriptive Test 4: ROA Quartile Heterogeneity.',
+            'tableAim': 'Explore associations across contemporaneous ROA quartiles.',
+            'tableExplanation': 'Current ROA groups can change over time. Separate significance does not '
+                                'establish between-group differences. Joint company and year fixed effects: '
+                                'outcome, regressors and year indicators are projected off company '
+                                'indicators. Company-clustered CR1 uses full-model residual degrees of '
+                                'freedom; p-values use t(G-1). Within R² includes year effects relative to '
+                                'the company-demeaned outcome. Plot intervals are normal-approximation 95% '
+                                'intervals (coefficient +/- 1.96 SE).',
+            'tableSuitableSection': 'Results — Mechanism Tests'},
+ 'Table7': {'tableId': 'Table 7',
+            'tablePath': 'data/results/tables/Table7_IdentificationRobustness.xlsx',
+            'tableCaption': 'Identification Robustness: M1 Match Coefficient across Six Checks.',
+            'tableAim': 'Assess alternative timing, outcomes and sample definitions.',
+            'tableExplanation': 'R0 is baseline plus five alternatives. Longer lags do not rule out reverse '
+                                'causality; growth is a different outcome. Joint company and year fixed '
+                                'effects: outcome, regressors and year indicators are projected off company '
+                                'indicators. Company-clustered CR1 uses full-model residual degrees of '
+                                'freedom; p-values use t(G-1). Within R² includes year effects relative to '
+                                'the company-demeaned outcome. Plot intervals are normal-approximation 95% '
+                                'intervals (coefficient +/- 1.96 SE).',
+            'tableSuitableSection': 'Results — Identification'},
+ 'Table8': {'tableId': 'Table 8',
+            'tablePath': 'data/results/tables/Table8_SectorHet_M1.xlsx',
+            'tableCaption': 'Sector Heterogeneity: M1 Relatedness by GICS Sector.',
+            'tableAim': 'Explore topic associations within industries; no confirmed sector rankings.',
+            'tableExplanation': 'Exploratory comparisons involve multiple testing and some small company '
+                                'clusters. No adjusted p-values or formal between-sector contrasts are '
+                                'reported. Joint company and year fixed effects: outcome, regressors and '
+                                'year indicators are projected off company indicators. Company-clustered CR1 '
+                                'uses full-model residual degrees of freedom; p-values use t(G-1). Within R² '
+                                'includes year effects relative to the company-demeaned outcome. Plot '
+                                'intervals are normal-approximation 95% intervals (coefficient +/- 1.96 SE).',
+            'tableSuitableSection': 'Results — Sector Heterogeneity'},
+ 'Table9': {'tableId': 'Table 9',
+            'tablePath': 'data/results/tables/Table9_SectorHet_M3.xlsx',
+            'tableCaption': 'Sector Heterogeneity: M3 Positive and Negative Mean by GICS Sector.',
+            'tableAim': 'Explore topic associations within industries; no confirmed sector rankings.',
+            'tableExplanation': 'Exploratory comparisons involve multiple testing and some small company '
+                                'clusters. No adjusted p-values or formal between-sector contrasts are '
+                                'reported. Joint company and year fixed effects: outcome, regressors and '
+                                'year indicators are projected off company indicators. Company-clustered CR1 '
+                                'uses full-model residual degrees of freedom; p-values use t(G-1). Within R² '
+                                'includes year effects relative to the company-demeaned outcome. Plot '
+                                'intervals are normal-approximation 95% intervals (coefficient +/- 1.96 SE).',
+            'tableSuitableSection': 'Results — Sector Heterogeneity'},
+ 'TableS1': {'tableId': 'Table S1',
+             'tablePath': 'data/results/tables/S1_Coef_Competitiveness.xlsx',
+             'tableCaption': 'Per-Topic Coefficient Table: Competitiveness (M1 / M2 / M3).',
+             'tableAim': 'Report full TWFE regression output for all three specifications (M1, M2, M3) for '
+                         'the Competitiveness topic.',
+             'tableExplanation': 'Rows = specification × variable (M1: Relatedness; M2: Relatedness + '
+                                 'Overall Sentiment; M3: Positive Mean + Negative Mean). Columns = β, SE, N '
+                                 'obs, N companies, Within R². Topic: Competitiveness.',
+             'tableSuitableSection': 'Online Supplement — Per-Topic Results'},
+ 'TableS2': {'tableId': 'Table S2',
+             'tablePath': 'data/results/tables/S2_Coef_StakeholderCo-creati.xlsx',
+             'tableCaption': 'Per-Topic Coefficient Table: Stakeholder Co-creation (M1 / M2 / M3).',
+             'tableAim': 'Report full TWFE regression output for all three specifications (M1, M2, M3) for '
+                         'the Stakeholder Co-creation topic.',
+             'tableExplanation': 'Rows = specification × variable (M1: Relatedness; M2: Relatedness + '
+                                 'Overall Sentiment; M3: Positive Mean + Negative Mean). Columns = β, SE, N '
+                                 'obs, N companies, Within R². Topic: Stakeholder Co-creation.',
+             'tableSuitableSection': 'Online Supplement — Per-Topic Results'},
+ 'TableS3': {'tableId': 'Table S3',
+             'tablePath': 'data/results/tables/S3_Coef_BusinessPortfolio.xlsx',
+             'tableCaption': 'Per-Topic Coefficient Table: Business Portfolio (M1 / M2 / M3).',
+             'tableAim': 'Report full TWFE regression output for all three specifications (M1, M2, M3) for '
+                         'the Business Portfolio topic.',
+             'tableExplanation': 'Rows = specification × variable (M1: Relatedness; M2: Relatedness + '
+                                 'Overall Sentiment; M3: Positive Mean + Negative Mean). Columns = β, SE, N '
+                                 'obs, N companies, Within R². Topic: Business Portfolio.',
+             'tableSuitableSection': 'Online Supplement — Per-Topic Results'},
+ 'TableS4': {'tableId': 'Table S4',
+             'tablePath': 'data/results/tables/S4_Coef_IntellectualCapital.xlsx',
+             'tableCaption': 'Per-Topic Coefficient Table: Intellectual Capital (M1 / M2 / M3).',
+             'tableAim': 'Report full TWFE regression output for all three specifications (M1, M2, M3) for '
+                         'the Intellectual Capital topic.',
+             'tableExplanation': 'Rows = specification × variable (M1: Relatedness; M2: Relatedness + '
+                                 'Overall Sentiment; M3: Positive Mean + Negative Mean). Columns = β, SE, N '
+                                 'obs, N companies, Within R². Topic: Intellectual Capital.',
+             'tableSuitableSection': 'Online Supplement — Per-Topic Results'},
+ 'TableS5': {'tableId': 'Table S5',
+             'tablePath': 'data/results/tables/S5_Coef_DigitalTransformatio.xlsx',
+             'tableCaption': 'Per-Topic Coefficient Table: Digital Transformation (M1 / M2 / M3).',
+             'tableAim': 'Report full TWFE regression output for all three specifications (M1, M2, M3) for '
+                         'the Digital Transformation topic.',
+             'tableExplanation': 'Rows = specification × variable (M1: Relatedness; M2: Relatedness + '
+                                 'Overall Sentiment; M3: Positive Mean + Negative Mean). Columns = β, SE, N '
+                                 'obs, N companies, Within R². Topic: Digital Transformation.',
+             'tableSuitableSection': 'Online Supplement — Per-Topic Results'},
+ 'TableS6': {'tableId': 'Table S6',
+             'tablePath': 'data/results/tables/S6_Coef_FinancialMetrics.xlsx',
+             'tableCaption': 'Per-Topic Coefficient Table: Financial Metrics (M1 / M2 / M3).',
+             'tableAim': 'Report full TWFE regression output for all three specifications (M1, M2, M3) for '
+                         'the Financial Metrics topic.',
+             'tableExplanation': 'Rows = specification × variable (M1: Relatedness; M2: Relatedness + '
+                                 'Overall Sentiment; M3: Positive Mean + Negative Mean). Columns = β, SE, N '
+                                 'obs, N companies, Within R². Topic: Financial Metrics.',
+             'tableSuitableSection': 'Online Supplement — Per-Topic Results'},
+ 'TableS7': {'tableId': 'Table S7',
+             'tablePath': 'data/results/tables/S7_Coef_CorporateValue.xlsx',
+             'tableCaption': 'Per-Topic Coefficient Table: Corporate Value (M1 / M2 / M3).',
+             'tableAim': 'Report full TWFE regression output for all three specifications (M1, M2, M3) for '
+                         'the Corporate Value topic.',
+             'tableExplanation': 'Rows = specification × variable (M1: Relatedness; M2: Relatedness + '
+                                 'Overall Sentiment; M3: Positive Mean + Negative Mean). Columns = β, SE, N '
+                                 'obs, N companies, Within R². Topic: Corporate Value.',
+             'tableSuitableSection': 'Online Supplement — Per-Topic Results'}}
 
 # Supplement tables S1–S7 (per-topic coefficient tables)
 for _si, _topic in enumerate(ENV_TOPICS, 1):
@@ -1208,75 +1300,83 @@ for _si, _topic in enumerate(ENV_TOPICS, 1):
         "tableSuitableSection": "Online Supplement — Per-Topic Results",
     }
 
-analysis_levels = [
-    {
-        "levelName": "Data Preparation",
-        "levelAim": "Merge NLP scores, market cap, GICS, fundamentals, and IBES into a single analysis panel.",
-        "inputs": ["match_scores.csv", "tendency_scores.csv", "sentiment_scores.csv",
-                   "Market_cap_annual.xlsx", "annual_financial_raw.xlsx",
-                   "IBES_monthly_raw.xlsx", "MSCI_category_Japan_listed_companies.xlsx",
-                   "Japan_interest_rate_annual.xlsx"],
-        "modelOrMethod": "Merge on (stock_code, year); lag ESG and control variables by 1 year and 2 years; compute log MC and ΔlogMC.",
-        "outputs": ["data/processed/panel.parquet (37,272 obs × 328 cols)"],
-        "interpretation": "Panel ready for TWFE estimation. t-2 lag columns computed in notebook for identification robustness.",
-    },
-    {
-        "levelName": "Part I — Baseline Association (M1/M2/M3)",
-        "levelAim": "Establish that Business ESG disclosure associates with market cap and characterise the operative channel among coverage volume, overall tone, and directional intensity.",
-        "inputs": ["panel.parquet", "ENV_TOPICS (7 Business topics)"],
-        "modelOrMethod": "Two-way FE panel OLS (Frisch-Waugh within-company demeaning + C(year) dummies). SE clustered by company. 21 models: 7 topics × 3 specs (M1, M2, M3). ESG var lagged t-1.",
-        "outputs": ["Table 2 (cross-topic summary)", "Tables S1–S7 (per-topic)", "Figure 5 (coefficient plots)"],
-        "interpretation": "Significant M1 β: coverage volume associates with MC. M3 β_pos > 0, β_neg sign reveals signalling vs. penalty mechanism.",
-    },
-    {
-        "levelName": "Part II — Mechanism Test 1: Information Channel",
-        "levelAim": "Determine whether Business disclosure predicts MC beyond fundamental quality (ROA and leverage).",
-        "inputs": ["panel.parquet", "roa_pct_lag1", "ltdebt_assets_pct_lag1"],
-        "modelOrMethod": "TWFE M1 on identical sample with and without ROA + LT leverage controls. Attenuation % = (1 − |β_ctrl/β_base|) × 100.",
-        "outputs": ["Table 3 (attenuation summary)", "Figure 6 (before/after forest plot)"],
-        "interpretation": "Attenuation < 30%: information channel dominates firm quality. Attenuation > 70%: association primarily reflects firm quality.",
-    },
-    {
-        "levelName": "Part II — Mechanism Test 2: Analyst Attention Channel",
-        "levelAim": "Test whether Business disclosure transmits to market cap through improved analyst consensus (mediation).",
-        "inputs": ["panel.parquet", "ibes_rec_mean", "ibes_rec_mean_lag1"],
-        "modelOrMethod": "Baron-Kenny three-stage TWFE mediation. Stage 1: match(t-1) → IBES rec(t). Stage 2a: match(t-1) → logMC, IBES sample. Stage 2b: match(t-1) + IBES rec(t-1) → logMC.",
-        "outputs": ["Table 4 (mediation summary)", "Figure 7 (S2a vs S2b forest plot)"],
-        "interpretation": "Coefficient attenuation from S2a to S2b quantifies the analyst-channel proportion. Significant Stage 1 + attenuation confirms analyst transmission.",
-    },
-    {
-        "levelName": "Part II — Mechanism Test 3: Signal Direction (M3 Asymmetry)",
-        "levelAim": "Classify whether positive and risk-acknowledging Business disclosure carry the same or opposite valuation effects.",
-        "inputs": ["panel.parquet", "tend_{topic}_pos_mean_lag1", "tend_{topic}_neg_mean_lag1"],
-        "modelOrMethod": "TWFE M3 model. Compare sign of β_pos_mean and β_neg_mean per topic. Classify: bilateral signalling (both > 0), risk penalty (pos > 0, neg < 0), transparency dominates (neg > 0 > pos), ambiguous.",
-        "outputs": ["Table 5 (pattern classification)", "Figure 8 (grouped bar chart)"],
-        "interpretation": "Bilateral signalling: market rewards both growth signals and risk transparency. Risk penalty: market treats negative Business content as bad news.",
-    },
-    {
-        "levelName": "Part II — Mechanism Test 4: ROA Quartile Heterogeneity",
-        "levelAim": "Distinguish signalling theory from complementarity by testing whether the disclosure premium varies monotonically with ROA.",
-        "inputs": ["panel.parquet", "roa_pct (within-year quartile split)"],
-        "modelOrMethod": "TWFE M1 estimated separately per within-year ROA quartile per topic.",
-        "outputs": ["Table 6 (quartile results)", "Figure 9 (quartile forest plot)"],
-        "interpretation": "Q1 (low ROA) > Q4 (high ROA): signalling theory. Q4 > Q1: complementarity.",
-    },
-    {
-        "levelName": "Part III — Identification Robustness",
-        "levelAim": "Verify that the baseline association is not driven by reverse causality, COVID shock, sample selection, or outliers.",
-        "inputs": ["panel.parquet", "match_{topic}_lag1", "match_{topic}_lag2"],
-        "modelOrMethod": "Six checks: R0 baseline (t-1), R1 t-2 lag, R2 ΔlogMC outcome, R3 exclude 2020, R4 balanced panel, R5 winsorised ΔlogMC.",
-        "outputs": ["Table 7 (robustness summary)", "Figure 10 (robustness forest plot)"],
-        "interpretation": "Consistent sign and approximate magnitude across R0–R5 (especially R1 t-2 lag) strengthens identification. R1 survival is the sharpest test against reverse causality.",
-    },
-    {
-        "levelName": "Part IV — Sector Heterogeneity",
-        "levelAim": "Identify in which GICS sectors Business disclosure commands the largest valuation premium.",
-        "inputs": ["panel.parquet", "sector (11 GICS sectors)"],
-        "modelOrMethod": "TWFE M1 and M3 estimated separately within each sector for each of 7 Business topics (11 × 7 × 2 = 154 models).",
-        "outputs": ["Table 8 (M1 sector)", "Table 9 (M3 sector)", "Figure 11 (M1 sector forest plot)"],
-        "interpretation": "Sectors with high Business disclosure materiality (IT, Consumer Discretionary, Industrials) should show larger β. Financials: financial_metrics topic likely prominent.",
-    },
-]
+analysis_levels = [{'levelName': 'Data Preparation',
+  'levelAim': 'Construct exact calendar-year lags and annual market-capitalization changes.',
+  'inputs': ['match_scores.csv',
+             'tendency_scores.csv',
+             'sentiment_scores.csv',
+             'Market_cap_annual.xlsx',
+             'annual_financial_raw.xlsx',
+             'IBES_monthly_raw.xlsx',
+             'MSCI_category_Japan_listed_companies.xlsx',
+             'Japan_interest_rate_annual.xlsx'],
+  'modelOrMethod': 'Merge on (stock_code, year); lag ESG and control variables by 1 year and 2 years; '
+                   'compute log MC and ΔlogMC.',
+  'outputs': ['data/processed/panel.parquet (37,272 obs × 328 cols)'],
+  'interpretation': 'Missing prior calendar years produce missing lags; a prior row is not a prior year.'},
+ {'levelName': 'Part I — Baseline Association (M1/M2/M3)',
+  'levelAim': 'Compare separate topic associations under M1, M2 and alternative M3.',
+  'inputs': ['panel.parquet', 'ENV_TOPICS (7 Business topics)'],
+  'modelOrMethod': 'Joint company and year fixed effects: outcome, regressors and year indicators are '
+                   'projected off company indicators. Company-clustered CR1 uses full-model residual degrees '
+                   'of freedom; p-values use t(G-1). Within R² includes year effects relative to the '
+                   'company-demeaned outcome. Plot intervals are normal-approximation 95% intervals '
+                   '(coefficient +/- 1.96 SE).',
+  'outputs': ['Table 2 (cross-topic summary)', 'Tables S1–S7 (per-topic)', 'Figure 5 (coefficient plots)'],
+  'interpretation': 'Separate-topic regressions do not identify independent topic contributions. Joint '
+                    'company and year fixed effects: outcome, regressors and year indicators are projected '
+                    'off company indicators. Company-clustered CR1 uses full-model residual degrees of '
+                    'freedom; p-values use t(G-1). Within R² includes year effects relative to the '
+                    'company-demeaned outcome. Plot intervals are normal-approximation 95% intervals '
+                    '(coefficient +/- 1.96 SE).'},
+ {'levelName': 'Part II — Descriptive Comparison 1: Information Channel',
+  'levelAim': 'Assess same-sample sensitivity to lagged ROA and leverage.',
+  'inputs': ['panel.parquet', 'roa_pct_lag1', 'ltdebt_assets_pct_lag1'],
+  'modelOrMethod': 'TWFE M1 on identical sample with and without ROA + LT leverage controls. Attenuation % = '
+                   '(1 − |β_ctrl/β_base|) × 100.',
+  'outputs': ['Table 3 (attenuation summary)', 'Figure 6 (before/after forest plot)'],
+  'interpretation': 'Coefficient attenuation is not a causal proportion and no arbitrary threshold '
+                    'establishes a channel.'},
+ {'levelName': 'Part II — Descriptive Comparison 2: Analyst Recommendation Comparison',
+  'levelAim': 'Assess associations with analyst recommendations and same-sample adjustment.',
+  'inputs': ['panel.parquet', 'ibes_rec_mean', 'ibes_rec_mean_lag1'],
+  'modelOrMethod': 'S1: relatedness(t-1) and recommendation(t); S2a: relatedness(t-1) and logMC(t); S2b adds '
+                   'recommendation(t-1) on the same S2 sample.',
+  'outputs': ['Table 4 (mediation summary)', 'Figure 7 (S2a vs S2b forest plot)'],
+  'interpretation': 'Stage 1 uses current recommendations; stage 2 controls lagged recommendations. '
+                    'Different timing and samples do not identify mediation. Recommendations measure '
+                    'assessment, not attention.'},
+ {'levelName': 'Part II — Descriptive Comparison 3: Signal Direction (M3 Asymmetry)',
+  'levelAim': 'Describe signed positive and negative score coefficients.',
+  'inputs': ['panel.parquet', 'tend_{topic}_pos_mean_lag1', 'tend_{topic}_neg_mean_lag1'],
+  'modelOrMethod': 'M3 includes positive and signed negative mean scores, without Relatedness or Overall '
+                   'Sentiment.',
+  'outputs': ['Table 5 (pattern classification)', 'Figure 8 (grouped bar chart)'],
+  'interpretation': 'Negative Mean is signed: a more negative value is a decrease. Pattern labels describe '
+                    'coefficient signs, not established mechanisms.'},
+ {'levelName': 'Part II — Descriptive Comparison 4: ROA Quartile Heterogeneity',
+  'levelAim': 'Explore associations across contemporaneous ROA quartiles.',
+  'inputs': ['panel.parquet', 'roa_pct (within-year quartile split)'],
+  'modelOrMethod': 'TWFE M1 estimated separately per within-year ROA quartile per topic.',
+  'outputs': ['Table 6 (quartile results)', 'Figure 9 (quartile forest plot)'],
+  'interpretation': 'Current ROA groups can change over time. Separate significance does not establish '
+                    'between-group differences.'},
+ {'levelName': 'Part III — Specification Sensitivity',
+  'levelAim': 'Assess alternative timing, outcomes and sample definitions.',
+  'inputs': ['panel.parquet', 'match_{topic}_lag1', 'match_{topic}_lag2'],
+  'modelOrMethod': 'Six checks: R0 baseline (t-1), R1 t-2 lag, R2 ΔlogMC outcome, R3 exclude 2020, R4 '
+                   'balanced panel, R5 winsorised ΔlogMC.',
+  'outputs': ['Table 7 (robustness summary)', 'Figure 10 (robustness forest plot)'],
+  'interpretation': 'R0 is baseline plus five alternatives. Longer lags do not rule out reverse causality; '
+                    'growth is a different outcome.'},
+ {'levelName': 'Part IV — Sector Heterogeneity',
+  'levelAim': 'Explore topic associations within industries; no confirmed sector rankings.',
+  'inputs': ['panel.parquet', 'sector (11 GICS sectors)'],
+  'modelOrMethod': 'TWFE M1 and M3 estimated separately within each sector for each of 7 Business topics (11 '
+                   '× 7 × 2 = 154 models).',
+  'outputs': ['Table 8 (M1 sector)', 'Table 9 (M3 sector)', 'Figure 11 (M1 sector forest plot)'],
+  'interpretation': 'Exploratory comparisons involve multiple testing and some small company clusters. No '
+                    'adjusted p-values or formal between-sector contrasts are reported.'}]
 
 actionbrief = {
     "doc_type": "actionbrief",
@@ -1300,6 +1400,12 @@ actionbrief = {
         "levels": analysis_levels,
     },
 }
+
+# Keep the content dictionary aligned with the estimand and actual implementation.
+from research_metadata import align_metadata
+align_metadata(actionbrief)
+with open(META / "variable_dictionary.yaml", "w", encoding="utf-8") as f:
+    yaml.dump(variable_dict, f, allow_unicode=True, sort_keys=False)
 
 with open(DOCS / "actionbrief.yaml", "w", encoding="utf-8") as f:
     yaml.dump(actionbrief, f, allow_unicode=True, sort_keys=False, default_flow_style=False,
